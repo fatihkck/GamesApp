@@ -1,6 +1,14 @@
 namespace GamesApp.Audio;
 
-/// <summary>Sahneye çıkabilen hayvanlar.</summary>
+/// <summary>
+/// Sahneye çıkabilen hayvanlar.
+///
+/// İlk sekizi çiftlik hayvanıdır (piyano ve davul oyunlarının hayvan sürprizi bunlarla
+/// başlamıştı); sondaki dördü Hayvanat Bahçesi oyunu için eklendi ama sürpriz havuzu da
+/// onları kullanır (çeşitlilik arttıkça sürpriz etkisi güçlenir).
+///
+/// Sayısal değerler kalıcıdır: yeni hayvan SONA eklenir, aradaki numaralar değişmez.
+/// </summary>
 internal enum AnimalKind
 {
     Cat = 0,
@@ -10,7 +18,11 @@ internal enum AnimalKind
     Chick = 4,
     Duck = 5,
     Rooster = 6,
-    Frog = 7
+    Frog = 7,
+    Elephant = 8,
+    Lion = 9,
+    Monkey = 10,
+    Penguin = 11
 }
 
 /// <summary>Hayvanlara ait metin bilgileri (Türkçe sesler, dosya adları).</summary>
@@ -26,7 +38,11 @@ internal static class AnimalInfo
         AnimalKind.Chick,
         AnimalKind.Duck,
         AnimalKind.Rooster,
-        AnimalKind.Frog
+        AnimalKind.Frog,
+        AnimalKind.Elephant,
+        AnimalKind.Lion,
+        AnimalKind.Monkey,
+        AnimalKind.Penguin
     };
 
     /// <summary>Konuşma balonunda gösterilen Türkçe ses metni.</summary>
@@ -40,6 +56,10 @@ internal static class AnimalInfo
         AnimalKind.Duck => "VAK VAK!",
         AnimalKind.Rooster => "Ü-ÜRÜ-ÜÜÜ!",
         AnimalKind.Frog => "VIRAK!",
+        AnimalKind.Elephant => "FÜÜÜÜ!",
+        AnimalKind.Lion => "ROAAAR!",
+        AnimalKind.Monkey => "U-U AAH!",
+        AnimalKind.Penguin => "ORK ORK!",
         _ => "?"
     };
 
@@ -54,6 +74,10 @@ internal static class AnimalInfo
         AnimalKind.Duck => "Ördek",
         AnimalKind.Rooster => "Horoz",
         AnimalKind.Frog => "Kurbağa",
+        AnimalKind.Elephant => "Fil",
+        AnimalKind.Lion => "Aslan",
+        AnimalKind.Monkey => "Maymun",
+        AnimalKind.Penguin => "Penguen",
         _ => "?"
     };
 
@@ -71,6 +95,10 @@ internal static class AnimalInfo
         AnimalKind.Duck => "duck",
         AnimalKind.Rooster => "rooster",
         AnimalKind.Frog => "frog",
+        AnimalKind.Elephant => "elephant",
+        AnimalKind.Lion => "lion",
+        AnimalKind.Monkey => "monkey",
+        AnimalKind.Penguin => "penguin",
         _ => "unknown"
     };
 }

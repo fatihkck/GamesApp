@@ -5,6 +5,7 @@ using GamesApp.Games;
 using GamesApp.Games.Bubbles;
 using GamesApp.Games.Drums;
 using GamesApp.Games.Piano;
+using GamesApp.Games.Zoo;
 using GamesApp.Input;
 using GamesApp.Interop;
 using GamesApp.UI;
@@ -113,7 +114,8 @@ internal static class Program
         {
             new PianoGameControl(synth, animalSound),
             new DrumGameControl(drums, animalSound),
-            new BalloonGameControl(mixer, music)
+            new BalloonGameControl(mixer, music),
+            new ZooGameControl(mixer)
         };
 
         using var form = new ShellForm(games, synth.IsAvailable, selfTestMode: false);
@@ -313,6 +315,42 @@ internal static class Program
                 success = false;
             }
 
+            // --- Hayvan sesleri: mikser yolu (Hayvanat Bahçesi) gür ve dolu mu? ---
+            // Bu oyunda ses tuş başına tetiklendiği için MIDI/PlaySound değil ortak
+            // mikser kullanılır; her örnek tam ölçeğe yakın olmalıdır (kural 6).
+            int mixerVoices = 0;
+            for (int i = 0; i < AnimalInfo.All.Length; i++)
+            {
+                short[] sample = AnimalSoundSynth.GetMixerSample(AnimalInfo.All[i]);
+
+                int peak = 0;
+                for (int j = 0; j < sample.Length; j++)
+                {
+                    int magnitude = Math.Abs((int)sample[j]);
+                    if (magnitude > peak)
+                    {
+                        peak = magnitude;
+                    }
+                }
+
+                // En az 4410 örnek (~100 ms) ve tepe değeri tam ölçeğin %60'ı üzerinde.
+                if (sample.Length >= 4410 && peak >= (int)(short.MaxValue * 0.6f))
+                {
+                    mixerVoices++;
+                }
+                else
+                {
+                    lines.Add($"AnimalMixerFail: {AnimalInfo.GetDisplayName(AnimalInfo.All[i])} " +
+                              $"(len {sample.Length}, peak {peak})");
+                }
+            }
+
+            lines.Add($"AnimalMixer: {mixerVoices}/{AnimalInfo.All.Length} rendered");
+            if (mixerVoices != AnimalInfo.All.Length)
+            {
+                success = false;
+            }
+
             // --- Hayvan görselleri: her biri ekran dışı bitmap'e çizilebiliyor mu? ---
             int drawn = 0;
             for (int i = 0; i < AnimalInfo.All.Length; i++)
@@ -374,7 +412,18 @@ internal static class Program
                 ("ördek-vak-vak.mp3", AnimalKind.Duck),
                 ("kurbağa-vırak-sesi.ogg", AnimalKind.Frog),
                 ("kuş-cıvıltısı.m4a", AnimalKind.Chick),
-                ("random-music-123.mp3", null)
+                ("random-music-123.mp3", null),
+
+                // Hayvanat Bahçesi hayvanları
+                ("elephant-trumpet-3.mp3", AnimalKind.Elephant),
+                ("fil sesi.wav", AnimalKind.Elephant),
+                ("lion-roar-8821.mp3", AnimalKind.Lion),
+                ("maymun-çığlığı.mp3", AnimalKind.Monkey),
+                ("penguin-call.ogg", AnimalKind.Penguin),
+
+                // Kısa anahtarlar TAM SÖZCÜK kuralı: "file" içindeki "fil" sayılmaz,
+                // yoksa alakasız her dosya file adı yüzünden fil sesi olurdu.
+                ("sound-file-01.mp3", null)
             };
 
             int edgeMatches = 0;
@@ -443,11 +492,49 @@ internal static class Program
             // uygulama çalışmaya devam eder, bu yüzden testi düşürmez.
             lines.Add($"MciPath: {TestMciPath()}");
 
-            // --- Kabuk + üç oyunun uçtan uca denemesi ---
+            // --- Kabuk + dört oyunun uçtan uca denemesi ---
             var pianoGame = new PianoGameControl(synth, animalSound);
             var drumGame = new DrumGameControl(drums, animalSound);
             var balloonGame = new BalloonGameControl(mixer, music);
-            var games = new IGameModule[] { pianoGame, drumGame, balloonGame };
+            var zooGame = new ZooGameControl(mixer);
+            var games = new IGameModule[] { pianoGame, drumGame, balloonGame, zooGame };
+
+            // --- Menü sözleşmesi: her oyunun simgesi ve adı olmalı ---
+            // Simge kritik: menü daraldığında ad gizlenir, geriye yalnızca simge kalır.
+            int labelled = 0;
+            for (int i = 0; i < games.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(games[i].MenuIcon) &&
+                    !string.IsNullOrWhiteSpace(games[i].MenuTitle))
+                {
+                    labelled++;
+                }
+            }
+
+            lines.Add($"MenuLabels: {labelled}/{games.Length}");
+            if (labelled != games.Length)
+            {
+                success = false;
+            }
+
+            // --- Menü sığdırma: geniş ekranda tek sayfa, dar ekranda sayfalanır ---
+            // Menüye çok oyun geldiğinde butonların taşmaması bu hesaba bağlıdır.
+            int widePages;
+            int narrowPages;
+            using (var strip = new GameMenuStrip(games))
+            {
+                strip.Size = new Size(1400, 96);
+                widePages = strip.PageCount;
+
+                strip.Size = new Size(360, 96);
+                narrowPages = strip.PageCount;
+            }
+
+            lines.Add($"MenuPaging: wide {widePages} page(s), narrow {narrowPages} page(s)");
+            if (widePages != 1 || narrowPages < 2)
+            {
+                success = false;
+            }
 
             using var form = new ShellForm(games, synth.IsAvailable, selfTestMode: true);
             _hook = form.Hook; // selftest'te null olmalı
@@ -464,14 +551,18 @@ internal static class Program
             int audiblePianoSpecialKeys = 0;
             int audibleDrumKeys = 0;
             int audibleBalloonKeys = 0;
+            int audibleZooKeys = 0;
             bool pianoAnimalTriggered = false;
             bool drumAnimalTriggered = false;
             bool animalAudioPlayed = false;
             bool switchedToDrums = false;
             bool switchedToBalloons = false;
+            bool switchedToZoo = false;
             bool startedOnPiano = false;
             int balloonsOnField = 0;
             int balloonsAfterPlay = 0;
+            int zooWelcomeAnimals = 0;
+            int zooAnimalsAfterPlay = 0;
 
             // Bireysel olarak yutulan özel tuşlar: hiçbiri sessiz kalmamalı.
             // Esc, LWin, RWin, Alt, Tab, Ctrl, Shift, CapsLock
@@ -559,6 +650,31 @@ internal static class Program
 
                     balloonsAfterPlay = balloonGame.BalloonCount;
 
+                    // --- Hayvanat Bahçesine geç ve aynı yoldan doğrula ---
+                    form.SwitchToGame(3);
+                    switchedToZoo = ReferenceEquals(form.ActiveGame, zooGame);
+
+                    // Oyuna girişte karşılama hayvanı geldi mi? (Sahne boş başlamaz.)
+                    zooWelcomeAnimals = zooGame.AnimalCount;
+
+                    for (int i = 0; i < specialKeys.Length; i++)
+                    {
+                        if (zooGame.SelfTestFeedKey(specialKeys[i]))
+                        {
+                            audibleZooKeys++;
+                        }
+                    }
+
+                    // Uzun oynayış: hayvan çağır + kare ilerlet döngüsünde sahne
+                    // ne boş kalmalı ne de sınırsız kalabalıklaşmalı.
+                    for (int i = 0; i < 60; i++)
+                    {
+                        zooGame.SelfTestFeedKey(0x41 + (i % 20));
+                        zooGame.SelfTestAdvance(0.25f);
+                    }
+
+                    zooAnimalsAfterPlay = zooGame.AnimalCount;
+
                     form.SelfTestClose();
                 }
             };
@@ -629,15 +745,45 @@ internal static class Program
                 success = false;
             }
 
+            lines.Add(switchedToZoo ? "GameSwitch(Zoo): OK" : "GameSwitch(Zoo): FAIL");
+            if (!switchedToZoo)
+            {
+                success = false;
+            }
+
+            lines.Add($"ZooWelcome: {zooWelcomeAnimals} animal(s)");
+            if (zooWelcomeAnimals <= 0)
+            {
+                success = false;
+            }
+
+            lines.Add($"SpecialKeys(Zoo): {audibleZooKeys}/{specialKeys.Length} reacted");
+            if (audibleZooKeys != specialKeys.Length)
+            {
+                success = false;
+            }
+
+            // 60 çağrıdan sonra sahnede hayvan olmalı ama üst sınır aşılmamalı:
+            // en yaşlı hayvan çıkışa zorlanarak yerini yenisine bırakır, fazlalık
+            // birikirse doğrudan kaldırılır (sahne okunur kalsın).
+            lines.Add($"ZooAfterPlay: {zooAnimalsAfterPlay} animal(s), " +
+                      $"limit {ZooStageView.MaxActors}");
+            if (zooAnimalsAfterPlay <= 0 || zooAnimalsAfterPlay > ZooStageView.MaxActors)
+            {
+                success = false;
+            }
+
             // Ses aygıtı yoksa SKIP yazılır ve bu başarısızlık SAYILMAZ.
             lines.Add(animalAudioPlayed ? "AnimalAudio: OK" : "AnimalAudio: SKIP");
 
             lines.Add($"Effects(Piano): {pianoGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Drums): {drumGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Balloons): {balloonGame.TotalEffectsSpawned} spawned");
+            lines.Add($"Effects(Zoo): {zooGame.TotalEffectsSpawned} spawned");
             if (pianoGame.TotalEffectsSpawned <= 0 ||
                 drumGame.TotalEffectsSpawned <= 0 ||
                 balloonGame.TotalEffectsSpawned <= 0 ||
+                zooGame.TotalEffectsSpawned <= 0 ||
                 noteIndex != demoNotes.Length)
             {
                 success = false;
@@ -712,7 +858,166 @@ internal static class Program
             }, "gamesapp-snapshot-balloons.png");
         }
 
+        using (var mixer = new WaveMixer())
+        using (var zoo = new ZooGameControl(mixer))
+        {
+            SaveSnapshot(zoo, () =>
+            {
+                // Üç hayvan çağrılır ve hepsi yerine yerleşene kadar ilerletilir:
+                // orman, hayvanlar ve konuşma balonları birlikte görünür.
+                zoo.Start();
+                zoo.HandleKeyDown(0x41);
+                zoo.HandleKeyDown(0x42);
+                zoo.SelfTestAdvance(0.95f);
+            }, "gamesapp-snapshot-zoo.png");
+        }
+
+        SaveAnimalSheet();
+        SaveMenuSheets();
+
         return 0;
+    }
+
+    /// <summary>
+    /// Menü şeridinde yalnızca ad/simge/renk taşıyan sahte oyun (snapshot aracı için).
+    /// Oynanabilir değildir; menünün YERLEŞİMİNİ gerçek oyunları kurmadan denetlemeye
+    /// yarar.
+    /// </summary>
+    private sealed class MenuPreviewGame : IGameModule
+    {
+        private readonly Control _view = new();
+
+        public MenuPreviewGame(string icon, string title, double hue)
+        {
+            MenuIcon = icon;
+            MenuTitle = title;
+            MenuColor = Theme.ColorFromHsv(hue, 0.82, 0.92);
+        }
+
+        public string MenuIcon { get; }
+
+        public string MenuTitle { get; }
+
+        public Color MenuColor { get; }
+
+        public Control View => _view;
+
+        public void Start() { }
+
+        public void Stop() { }
+
+        public void HandleKeyDown(int vkCode) { }
+
+        public void HandleKeyUp(int vkCode) { }
+
+        public void Dispose() => _view.Dispose();
+    }
+
+    /// <summary>
+    /// --snapshot (geliştirici aracı): Menü şeridini BUGÜNKÜ dört oyunla ve ileride
+    /// oyun sayısı artmış hâliyle (dokuz oyun) çizer. Menünün taşmadığı, daralınca
+    /// sayfalandığı ve simgelerin okunur kaldığı böyle denetlenir.
+    /// </summary>
+    private static void SaveMenuSheets()
+    {
+        // İlk dördü gerçek oyunlar; kalanı menünün büyümesini göstermek için örnek.
+        (string Icon, string Title, double Hue)[] catalog =
+        {
+            ("🎹", "Piyano", 205.0),
+            ("🥁", "Davul", 15.0),
+            ("🎈", "Balon", 330.0),
+            ("🦁", "Hayvanlar", 38.0),
+            ("🚗", "Arabalar", 250.0),
+            ("🔤", "Harfler", 120.0),
+            ("🎨", "Boyama", 285.0),
+            ("⭐", "Şekiller", 55.0),
+            ("🍎", "Meyveler", 0.0)
+        };
+
+        // Gerçek kabuktaki şerit genişliği: ekran eksi çıkış butonu ve kenar boşlukları.
+        RenderMenuSheet(catalog, 4, 1420, 96, "gamesapp-snapshot-menu-4.png");
+        RenderMenuSheet(catalog, catalog.Length, 1420, 96, "gamesapp-snapshot-menu-9.png");
+    }
+
+    private static void RenderMenuSheet(
+        (string Icon, string Title, double Hue)[] catalog,
+        int count,
+        int width,
+        int height,
+        string fileName)
+    {
+        var games = new IGameModule[count];
+        for (int i = 0; i < count; i++)
+        {
+            games[i] = new MenuPreviewGame(catalog[i].Icon, catalog[i].Title, catalog[i].Hue);
+        }
+
+        try
+        {
+            using var strip = new GameMenuStrip(games);
+            strip.Size = new Size(width, height);
+            strip.CreateControl();
+            strip.SetSelectedGame(count - 1);
+
+            using var bitmap = new Bitmap(width, height);
+            strip.DrawToBitmap(bitmap, new Rectangle(0, 0, width, height));
+            bitmap.Save(
+                Path.Combine(Path.GetTempPath(), fileName),
+                System.Drawing.Imaging.ImageFormat.Png);
+        }
+        finally
+        {
+            for (int i = 0; i < games.Length; i++)
+            {
+                games[i].Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// --snapshot (geliştirici aracı): TÜM hayvanları ızgara hâlinde tek PNG'ye çizer.
+    /// Selftest yalnızca "çizilebiliyor ve boş değil" der; hayvanın gerçekten kediye ya
+    /// da file benzeyip benzemediği ancak göze bakılarak denetlenebilir.
+    /// </summary>
+    private static void SaveAnimalSheet()
+    {
+        const int columns = 4;
+        const int cell = 260;
+
+        int rows = (AnimalInfo.All.Length + columns - 1) / columns;
+
+        using var bitmap = new Bitmap(columns * cell, rows * cell);
+        using (Graphics g = Graphics.FromImage(bitmap))
+        {
+            g.Clear(Theme.Background);
+
+            using var font = new Font("Segoe UI", 15f, FontStyle.Bold);
+            using var brush = new SolidBrush(Color.White);
+
+            for (int i = 0; i < AnimalInfo.All.Length; i++)
+            {
+                AnimalKind kind = AnimalInfo.All[i];
+                int x = i % columns * cell;
+                int y = i / columns * cell;
+
+                AnimalArtist.Draw(
+                    g,
+                    kind,
+                    new RectangleF(x + 30f, y + 14f, cell - 60f, cell - 70f),
+                    1f);
+
+                g.DrawString(
+                    $"{AnimalInfo.GetDisplayName(kind)} — {AnimalInfo.GetSoundText(kind)}",
+                    font,
+                    brush,
+                    x + 12f,
+                    y + cell - 46f);
+            }
+        }
+
+        bitmap.Save(
+            Path.Combine(Path.GetTempPath(), "gamesapp-snapshot-animals.png"),
+            System.Drawing.Imaging.ImageFormat.Png);
     }
 
     /// <summary>Stres testi için sessiz davul motoru (ses aygıtına dokunmaz).</summary>
@@ -818,6 +1123,37 @@ internal static class Program
             }
 
             lines.Add("Stress(Balloons): 6000 keys, 300 frames drawn");
+        }
+
+        // Hayvanat Bahçesi: döndürülen (takla atan) hayvanlar, gölge elipsleri ve
+        // konuşma balonları GDI+ dönüşümleriyle çizildiği için ayrıca stres edilir.
+        using (var mixer = new WaveMixer())
+        using (var zoo = new ZooGameControl(mixer))
+        {
+            zoo.Size = new Size(1600, 900);
+            zoo.CreateControl();
+
+            var random = new Random(777);
+
+            for (int i = 0; i < 6000; i++)
+            {
+                zoo.HandleKeyDown(random.Next(0, 256));
+
+                if (random.Next(2) == 0)
+                {
+                    zoo.HandleKeyUp(random.Next(0, 256));
+                }
+
+                // Kare süresi değişken: hayvanlar hem girer hem sahneyi terk eder.
+                zoo.SelfTestAdvance(random.Next(2) == 0 ? 0.016f : 0.35f);
+
+                if (i % 20 == 0)
+                {
+                    zoo.DrawToBitmap(bitmap, new Rectangle(Point.Empty, zoo.Size));
+                }
+            }
+
+            lines.Add("Stress(Zoo): 6000 keys, 300 frames drawn");
         }
 
         bool paintFailed = File.Exists(paintLog);

@@ -31,10 +31,6 @@ internal sealed class AnimalCue
     /// <summary>En uzun sahne süresi (saniye).</summary>
     public const float MaxSceneSeconds = 4.0f;
 
-    private static readonly Color BubbleFill = Color.FromArgb(255, 252, 250, 244);
-    private static readonly Color BubbleBorder = Color.FromArgb(255, 32, 24, 20);
-    private static readonly Color BubbleText = Color.FromArgb(255, 28, 22, 40);
-
     private readonly float _sceneSeconds;
     private readonly float _holdSeconds;
 
@@ -154,126 +150,6 @@ internal sealed class AnimalCue
             drawSide);
 
         AnimalArtist.Draw(g, Kind, box, alpha);
-        DrawSpeechBubble(g, area, box, speechFont, alpha);
-    }
-
-    /// <summary>Konuşma balonunu çizer; taşma olmayacak tarafa yerleştirir.</summary>
-    private void DrawSpeechBubble(Graphics g, RectangleF area, RectangleF animalBox, Font font, float alpha)
-    {
-        SizeF textSize = g.MeasureString(Text, font);
-        float padX = 26f;
-        float padY = 16f;
-        float bubbleWidth = textSize.Width + padX * 2f;
-        float bubbleHeight = textSize.Height + padY * 2f;
-        float gap = animalBox.Width * 0.10f;
-
-        // Önce sağa yerleştirmeyi dene; taşarsa sola geç.
-        bool toRight = animalBox.Right + gap + bubbleWidth <= area.Right - 16f;
-        float bubbleX = toRight
-            ? animalBox.Right + gap
-            : animalBox.X - gap - bubbleWidth;
-
-        // Sola da sığmıyorsa hayvanın üstüne koy.
-        bool above = false;
-        if (bubbleX < area.X + 16f)
-        {
-            bubbleX = Math.Clamp(
-                animalBox.X + (animalBox.Width - bubbleWidth) * 0.5f,
-                area.X + 16f,
-                Math.Max(area.X + 16f, area.Right - bubbleWidth - 16f));
-            above = true;
-        }
-
-        float bubbleY = above
-            ? Math.Max(area.Y + 16f, animalBox.Y - bubbleHeight - gap)
-            : animalBox.Y + animalBox.Height * 0.10f;
-
-        var bubble = new RectangleF(bubbleX, bubbleY, bubbleWidth, bubbleHeight);
-        float radius = Math.Min(26f, bubbleHeight * 0.45f);
-
-        using var fill = new SolidBrush(Theme.WithAlpha(BubbleFill, alpha));
-        using var border = new Pen(Theme.WithAlpha(BubbleBorder, alpha), 4f)
-        {
-            LineJoin = LineJoin.Round
-        };
-        using var textBrush = new SolidBrush(Theme.WithAlpha(BubbleText, alpha));
-
-        // Balonun kuyruğu (hayvana bakan küçük üçgen)
-        PointF[] tail = BuildTail(animalBox, bubble, toRight, above);
-
-        using (GraphicsPath path = BuildRoundedRectangle(bubble, radius))
-        {
-            g.FillPath(fill, path);
-            g.FillPolygon(fill, tail);
-            g.DrawPath(border, path);
-        }
-
-        // Kuyruğun kenar çizgileri (balonun gövdesiyle birleşen kenar hariç)
-        g.DrawLine(border, tail[0], tail[1]);
-        g.DrawLine(border, tail[1], tail[2]);
-
-        using var format = new StringFormat
-        {
-            Alignment = StringAlignment.Center,
-            LineAlignment = StringAlignment.Center
-        };
-
-        g.DrawString(Text, font, textBrush, bubble, format);
-    }
-
-    private static PointF[] BuildTail(RectangleF animalBox, RectangleF bubble, bool toRight, bool above)
-    {
-        float animalCenterY = animalBox.Y + animalBox.Height * 0.35f;
-        float animalCenterX = animalBox.X + animalBox.Width * 0.5f;
-
-        if (above)
-        {
-            float x = Math.Clamp(animalCenterX, bubble.X + 20f, bubble.Right - 20f);
-            return new[]
-            {
-                new PointF(x - 16f, bubble.Bottom - 2f),
-                new PointF(x + 6f, bubble.Bottom + 26f),
-                new PointF(x + 20f, bubble.Bottom - 2f)
-            };
-        }
-
-        float y = Math.Clamp(animalCenterY, bubble.Y + 20f, bubble.Bottom - 20f);
-
-        if (toRight)
-        {
-            return new[]
-            {
-                new PointF(bubble.X + 2f, y - 16f),
-                new PointF(bubble.X - 26f, y + 4f),
-                new PointF(bubble.X + 2f, y + 20f)
-            };
-        }
-
-        return new[]
-        {
-            new PointF(bubble.Right - 2f, y - 16f),
-            new PointF(bubble.Right + 26f, y + 4f),
-            new PointF(bubble.Right - 2f, y + 20f)
-        };
-    }
-
-    /// <summary>Yuvarlak köşeli dikdörtgen yolu üretir.</summary>
-    private static GraphicsPath BuildRoundedRectangle(RectangleF rect, float radius)
-    {
-        var path = new GraphicsPath();
-        float d = radius * 2f;
-
-        if (d <= 0f || rect.Width <= d || rect.Height <= d)
-        {
-            path.AddRectangle(rect);
-            return path;
-        }
-
-        path.AddArc(rect.X, rect.Y, d, d, 180f, 90f);
-        path.AddArc(rect.Right - d, rect.Y, d, d, 270f, 90f);
-        path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0f, 90f);
-        path.AddArc(rect.X, rect.Bottom - d, d, d, 90f, 90f);
-        path.CloseFigure();
-        return path;
+        SpeechBubble.Draw(g, area, box, Text, speechFont, alpha);
     }
 }

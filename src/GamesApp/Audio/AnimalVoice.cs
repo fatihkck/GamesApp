@@ -222,6 +222,81 @@ internal sealed class AnimalVoice
                 Gain = 1f
             }),
 
+        // FİL - "FÜÜÜÜ": borazan. Hızla tırmanan tiz testere + tutulan tepe;
+        // hafif gürültü bileşeni hortumdan geçen havayı taklit eder.
+        AnimalKind.Elephant => new AnimalVoice(
+            kind,
+            new VoiceSegment
+            {
+                StartFrequency = 240f,
+                EndFrequency = 620f,
+                DurationMs = 260,
+                Wave = WaveKind.Saw,
+                NoiseMix = 0.12f,
+                AttackMs = 25f,
+                ReleaseMs = 20f,
+                Gain = 0.9f
+            },
+            new VoiceSegment
+            {
+                StartFrequency = 620f,
+                EndFrequency = 560f,
+                DurationMs = 620,
+                Wave = WaveKind.Saw,
+                VibratoHz = 7f,
+                VibratoDepth = 0.03f,
+                NoiseMix = 0.14f,
+                AttackMs = 10f,
+                ReleaseMs = 240f,
+                Gain = 1f
+            }),
+
+        // ASLAN - "ROAAAR": kalın kükreme. Düşen frekans + bol gürültü + 14 Hz
+        // genlik titremesi (kükremenin "gırtlaktan gelen" dalgalanması).
+        AnimalKind.Lion => new AnimalVoice(
+            kind,
+            new VoiceSegment
+            {
+                StartFrequency = 170f,
+                EndFrequency = 130f,
+                DurationMs = 280,
+                Wave = WaveKind.Saw,
+                NoiseMix = 0.30f,
+                AttackMs = 30f,
+                ReleaseMs = 30f,
+                Gain = 0.85f
+            },
+            new VoiceSegment
+            {
+                StartFrequency = 130f,
+                EndFrequency = 78f,
+                DurationMs = 820,
+                Wave = WaveKind.Saw,
+                NoiseMix = 0.40f,
+                VibratoHz = 3f,
+                VibratoDepth = 0.03f,
+                AmplitudeModulationHz = 14f,
+                AmplitudeModulationDepth = 0.35f,
+                AttackMs = 20f,
+                ReleaseMs = 300f,
+                Gain = 1f
+            }),
+
+        // MAYMUN - "U-U AAH": dört kısa tiz çığlık; ilk ikisi kısa "u u",
+        // son ikisi yükselen "aah". Hızlı tempo maymunun telaşını verir.
+        AnimalKind.Monkey => new AnimalVoice(
+            kind,
+            CreateScreech(900f, 1250f, 90, silenceAfterMs: 60),
+            CreateScreech(950f, 1300f, 90, silenceAfterMs: 90),
+            CreateScreech(700f, 1500f, 150, silenceAfterMs: 70),
+            CreateScreech(1500f, 820f, 190, silenceAfterMs: 0)),
+
+        // PENGUEN - "ORK ORK": iki kısa, boğuk anırma. Testere + %30 gürültü.
+        AnimalKind.Penguin => new AnimalVoice(
+            kind,
+            CreateBray(silenceAfterMs: 120),
+            CreateBray(silenceAfterMs: 0)),
+
         _ => new AnimalVoice(
             kind,
             new VoiceSegment { StartFrequency = 440f, EndFrequency = 440f, DurationMs = 200 })
@@ -249,6 +324,42 @@ internal sealed class AnimalVoice
         AttackMs = 5f,
         ReleaseMs = 30f,
         Gain = 0.9f,
+        SilenceAfterMs = silenceAfterMs
+    };
+
+    /// <summary>Maymun çığlığı: tiz, kısa ve hızlı kayan tek hece.</summary>
+    private static VoiceSegment CreateScreech(
+        float startFrequency,
+        float endFrequency,
+        int durationMs,
+        int silenceAfterMs) => new()
+    {
+        StartFrequency = startFrequency,
+        EndFrequency = endFrequency,
+        DurationMs = durationMs,
+        Wave = WaveKind.Saw,
+        NoiseMix = 0.18f,
+        VibratoHz = 14f,
+        VibratoDepth = 0.04f,
+        AttackMs = 8f,
+        ReleaseMs = 45f,
+        Gain = 0.95f,
+        SilenceAfterMs = silenceAfterMs
+    };
+
+    /// <summary>Penguen anırması: kısa, boğuk, düşen tek hece.</summary>
+    private static VoiceSegment CreateBray(int silenceAfterMs) => new()
+    {
+        StartFrequency = 500f,
+        EndFrequency = 300f,
+        DurationMs = 170,
+        Wave = WaveKind.Saw,
+        NoiseMix = 0.30f,
+        AmplitudeModulationHz = 32f,
+        AmplitudeModulationDepth = 0.45f,
+        AttackMs = 10f,
+        ReleaseMs = 70f,
+        Gain = 1f,
         SilenceAfterMs = silenceAfterMs
     };
 

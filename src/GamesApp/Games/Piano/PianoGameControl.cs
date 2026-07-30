@@ -49,7 +49,9 @@ internal sealed class PianoGameControl : Control, IGameModule
         Controls.Add(_canvas);
     }
 
-    public string MenuTitle => "🎹 Piyano";
+    public string MenuIcon => "🎹";
+
+    public string MenuTitle => "Piyano";
 
     public Color MenuColor => Theme.ColorFromHsv(205.0, 0.80, 0.85);
 

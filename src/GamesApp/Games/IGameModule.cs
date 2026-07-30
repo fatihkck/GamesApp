@@ -13,7 +13,14 @@ namespace GamesApp.Games;
 /// </summary>
 internal interface IGameModule : IDisposable
 {
-    /// <summary>Menü butonunda görünen ad (ör. "🎹 Piyano").</summary>
+    /// <summary>
+    /// Menü butonundaki simge (ör. "🎹"). Menü daraldığında ad gizlenir ama simge
+    /// her zaman görünür kalır; okumayı bilmeyen çocuk oyunları simgeden tanır.
+    /// Tek bir emoji ya da kısa bir karakter olmalıdır.
+    /// </summary>
+    string MenuIcon { get; }
+
+    /// <summary>Menü butonunda görünen ad (ör. "Piyano"). Simge burada TEKRARLANMAZ.</summary>
     string MenuTitle { get; }
 
     /// <summary>Menü butonunun vurgu rengi.</summary>

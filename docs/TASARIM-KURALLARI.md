@@ -67,8 +67,11 @@ Bir oyunun sesi diğerinden belirgin kısıksa çocuk o oyunu "bozuk" algılar.
 
 **Uygulamada:** Davul ve balon sesleri MIDI yerine kod içinde sentezlenip tam ölçeğe
 normalize edilir ve `WaveMixer` üzerinden çalınır (MIDI perküsyon örnekleri, ayarlar
-tavana çekilse bile piyanodan kısık kalıyordu). Selftest her örneğin tepe seviyesini
-kontrol eder.
+tavana çekilse bile piyanodan kısık kalıyordu). Hayvanat Bahçesi'ndeki hayvan sesleri de
+aynı yoldan gider (`AnimalSoundSynth.GetMixerSample`); böylece hem diğer oyunlarla
+dengeli gürlükte olurlar hem de aynı anda birkaç hayvan sesi üst üste binebilir.
+Selftest her örneğin tepe seviyesini kontrol eder (`DrumSynth`, `PopSynth`,
+`AnimalMixer`).
 
 ## 7. Basılı tutmak ekranı boşaltmasın (auto-repeat nezaketi)
 
@@ -90,18 +93,31 @@ düşer, balonlar ikili doğar ve ekranın hemen altından girerler (hızlı pat
 anında yeni hedef bulur). Selftest hem açılış doluluğunu (`BalloonField`) hem 60
 patlatma sonrasını (`BalloonAfterPlay`) doğrular.
 
+Hayvanat Bahçesi'nde sahne iki katmanla dolu tutulur: orman kendi başına canlıdır
+(ağaçlar, ay, süzülen ateş böcekleri, çimen), ayrıca oyuna girişte **karşılama hayvanı**
+gelir ve sahne 2,5 saniye hayvansız kalırsa bir hayvan kendiliğinden çıkıp çocuğu tekrar
+basmaya davet eder. Ters yön de sınırlanır: hızlı basımda hayvanlar birikmesin diye
+sahnede en fazla `ZooStageView.MaxActors` hayvan bulunur (4 duran + 2 gitmekte olan);
+fazlası doğrudan kaldırılır. Selftest `ZooWelcome` ve `ZooAfterPlay` ile ikisini de
+doğrular.
+
 ## 9. Sürpriz ödüller (hayvan sürprizi) — oyun bazında opsiyonel
 
 Her 8-14 eylemden sonra sahneye rastgele bir hayvan çıkar (sesiyle birlikte). Tahmin
 edilemez ama sık gerçekleşir; şaşırtma etkisi ilgiyi uzun süre canlı tutar.
 
-**Uygulamada:** `AnimalDirector` (shuffle bag: aynı hayvan üst üste gelmez) + `AnimalCue`
-piyano ve davul oyunlarında ortaktır.
+**Uygulamada:** `AnimalDirector` (eşik sayacı) + `AnimalShuffleBag` (aynı hayvan üst üste
+gelmez) + `AnimalCue` piyano ve davul oyunlarında ortaktır. Havuzda 12 hayvan vardır:
+sekiz çiftlik hayvanı ile Hayvanat Bahçesi için eklenen fil, aslan, maymun ve penguen.
 
 **ESNETİLDİ — Balon oyunu:** Balon oyununda hayvan **çıkmaz** (kullanıcı kararı). Bu
 oyunun ödülü patlama anının kendisidir; sahne sade kalır ve dikkat balonlarda toplanır.
 Yani hayvan sürprizi zorunlu değil, oyuna göre tercih edilen bir araçtır: ödül mekaniği
 oyunun kendi eyleminde yeterince güçlüyse eklenmez.
+
+**ESNETİLDİ — Hayvanat Bahçesi:** Bu oyunda ayrı bir sürpriz katmanı **yoktur**; hayvanın
+kendisi oyunun ana mekaniğidir. Sürprizin üstüne sürpriz koymak sahneyi kalabalıklaştırır
+ve neden-sonuç ilişkisini bulanıklaştırırdı.
 
 ## 10. Çökme ve kilitlenme kesinlikle olmayacak
 
@@ -118,6 +134,27 @@ kilitli bırakabilir veya ebeveynin klavyesini kullanılamaz hale getirebilir.
   `OutOfMemoryException` fırlatır. Küçülen her efekt için alt sınır kontrolü konur.
 - `--stress` modu binlerce rastgele tuş ve yüzlerce kare çizerek bu hataları avlar.
 
+## 11. Menü oyun sayısıyla büyüyebilmeli
+
+Bu uygulamaya zamanla oyun eklenecektir. Menü, oyun sayısı arttığında bozulmamalı;
+hiçbir oyun erişilemez hâle gelmemeli ve **aktif oyun her zaman görünür** olmalıdır.
+
+**Uygulamada:** Menü şeridi (`GameMenuStrip`) üç aşamalı davranır:
+1. Tüm oyunlar sığıyorsa hepsi tek sayfada görünür ve boşluğu eşit paylaşır
+   (buton 224 pikselden büyütülmez: üç oyunla dev butonlar oluşmaz).
+2. Sığmıyorsa butonlar en küçük okunur genişliğine (96 piksel) iner ve şerit
+   **sayfalanır**: iki yanda ◀ ▶ okları, altta sayfa noktaları çıkar. Oyun
+   değiştirildiğinde aktif oyunun sayfasına otomatik geçilir.
+3. Buton yine darsa oyun **adı gizlenir, büyük simge kalır** (`GameMenuButton`).
+   Okumayı bilmeyen çocuk için en kritik öğe simgedir; bu yüzden en son o feda edilir.
+
+Menü çubuğunda kalıcı ipucu yazısı **yoktur**: yer oyun butonlarına ayrılır, yazı
+yalnızca gerçek bir sorun varsa (ses aygıtı yok, kanca kurulamadı) görünür.
+
+Simge çizimi `TextRenderer` (GDI) ile yapılır; `Graphics.DrawString` (GDI+) emoji
+gliflerini güvenilir çizmez. **Bilinçli sınır:** GDI renkli emoji desteklemediği için
+simgeler tek renk (beyaz) çıkar; renk ayrımı buton zemininden gelir.
+
 ---
 
 ## Yeni oyun eklerken kontrol listesi
@@ -125,9 +162,15 @@ kilitli bırakabilir veya ebeveynin klavyesini kullanılamaz hale getirebilir.
 1. `IGameModule` uygulayan bir `Control` yaz (`Games/<Ad>/` klasörü altında).
 2. 0-255 arası **her** tuşa tepki ver; auto-repeat'i ayrıca ele al (kural 1 ve 7).
 3. Sesi `WaveMixer` üzerinden, tam ölçeğe normalize edilmiş örneklerle çal (kural 6).
+   Hayvan sesi çalacaksan `AnimalSoundSynth.GetMixerSample` hazır örnek verir.
 4. `OnPaint`'i `PaintGuard` ile sar; küçülen şekillerde alt sınır koy (kural 10).
-5. `AnimalDirector` + hayvan sürprizini bağla (kural 9).
+5. `AnimalDirector` + hayvan sürprizini bağla (kural 9) — ya da neden bağlamadığını
+   sınıf yorumunda yaz.
 6. `Stop()` içinde kendi seslerini ve zamanlayıcılarını durdur (oyun değişiminde
    ses taşması olmasın).
-7. `Program.RunNormal` içindeki oyun listesine ekle — menü butonu otomatik oluşur.
-8. Selftest'e (`--selftest`) ve stres testine (`--stress`) yeni oyunu ekle.
+7. `MenuIcon` (tek emoji) ve `MenuTitle` (kısa ad, simge tekrarlanmaz) ver; menü
+   sığdırmayı kendisi yapar (kural 11).
+8. `Program.RunNormal` içindeki oyun listesine ekle — menü butonu otomatik oluşur.
+9. Selftest'e (`--selftest`), stres testine (`--stress`) ve snapshot'a (`--snapshot`)
+   yeni oyunu ekle; snapshot PNG'sine **gözle** bak (selftest "çizilebiliyor" der,
+   "güzel görünüyor" demez).

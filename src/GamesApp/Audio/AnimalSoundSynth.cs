@@ -8,10 +8,17 @@ namespace GamesApp.Audio;
 ///
 /// Üretilen sesler GERÇEK HAYVAN KAYDI DEĞİLDİR; kasıtlı olarak karikatür /
 /// oyuncak sesi karakterindedir.
+///
+/// İKİ ÇIKIŞ YOLU VARDIR:
+///  - <see cref="GetWav"/>: 22050 Hz WAV baytları. <c>PlaySound</c> ile bellekten çalınır
+///    (piyano/davul oyunlarındaki hayvan sürprizinin yedek yolu).
+///  - <see cref="GetMixerSample"/>: <see cref="SampleUtil.SampleRate"/> hızında 16-bit PCM
+///    örnek dizisi. Ortak <see cref="WaveMixer"/> üzerinden ÇOK SESLİ ve TAM SEVİYEDE
+///    çalınır (Hayvanat Bahçesi oyunu bunu kullanır; tasarım kuralı 6).
 /// </summary>
 internal static class AnimalSoundSynth
 {
-    /// <summary>Örnekleme hızı (Hz).</summary>
+    /// <summary>WAV çıkışının örnekleme hızı (Hz).</summary>
     public const int SampleRate = 22050;
 
     /// <summary>Klik sesini önlemek için baştaki/sondaki yumuşatma süresi (ms).</summary>
@@ -20,7 +27,17 @@ internal static class AnimalSoundSynth
     /// <summary>Normalizasyon hedefi (0-1). 1.0 kırpma riski taşır.</summary>
     private const float PeakTarget = 0.9f;
 
+    /// <summary>Mikser örneklerinin hedef tepe seviyesi (davul/balonla dengeli olsun).</summary>
+    private const float MixerPeakTarget = 0.95f;
+
+    /// <summary>
+    /// Mikser örneklerine uygulanan sürüş. Davulda 1.9 kullanılıyor; hayvan sesleri
+    /// ton ağırlıklı olduğu için daha düşük tutulur: gür olur ama boğuklaşmaz.
+    /// </summary>
+    private const float MixerDrive = 1.25f;
+
     private static readonly Dictionary<AnimalKind, byte[]> Cache = new();
+    private static readonly Dictionary<AnimalKind, short[]> MixerCache = new();
     private static readonly object Gate = new();
 
     /// <summary>
@@ -42,8 +59,53 @@ internal static class AnimalSoundSynth
         }
     }
 
+    /// <summary>
+    /// Hayvanın ortak <see cref="WaveMixer"/> ile çalınacak PCM örneğini döndürür
+    /// (<see cref="SampleUtil.SampleRate"/> hızında, tam ölçeğe normalize).
+    /// İlk çağrıda sentezlenir, sonrasında önbellekten verilir.
+    /// Dönen dizi ASLA değiştirilmemelidir (mikser bunu doğrudan okur).
+    /// </summary>
+    public static short[] GetMixerSample(AnimalKind kind)
+    {
+        lock (Gate)
+        {
+            if (MixerCache.TryGetValue(kind, out short[]? cached))
+            {
+                return cached;
+            }
+
+            short[] sample = RenderMixerSample(AnimalVoice.CreateFor(kind));
+            MixerCache[kind] = sample;
+            return sample;
+        }
+    }
+
+    /// <summary>
+    /// Bir sesi mikser hızında sentezler ve tam ölçeğe getirir (önbelleğe bakmadan).
+    /// Selftest bunu doğrudan çağırır.
+    /// </summary>
+    public static short[] RenderMixerSample(AnimalVoice voice)
+    {
+        float[] samples = RenderSamples(voice, SampleUtil.SampleRate);
+        ApplyEdgeFade(samples, SampleUtil.SampleRate);
+        return SampleUtil.Finalize(samples, MixerPeakTarget, MixerDrive);
+    }
+
     /// <summary>Bir sesi baştan sona sentezler (önbelleğe bakmadan).</summary>
     public static byte[] Render(AnimalVoice voice)
+    {
+        float[] samples = RenderSamples(voice, SampleRate);
+        Normalize(samples);
+        ApplyEdgeFade(samples, SampleRate);
+        return BuildWav(samples);
+    }
+
+    /// <summary>
+    /// Sesin ham örneklerini (yaklaşık -1..1) verilen örnekleme hızında üretir.
+    /// Normalizasyon ve son işlem çağırana bırakılır: WAV yolu ile mikser yolu
+    /// farklı gürlük hedefleri kullanır.
+    /// </summary>
+    private static float[] RenderSamples(AnimalVoice voice, int sampleRate)
     {
         // Gürültü bileşeni deterministik olsun ki her çalışmada aynı ses duyulsun.
         var noise = new Random(20260729);
@@ -52,12 +114,13 @@ internal static class AnimalSoundSynth
         for (int i = 0; i < voice.Segments.Count; i++)
         {
             VoiceSegment segment = voice.Segments[i];
-            totalSamples += MsToSamples(segment.DurationMs) + MsToSamples(segment.SilenceAfterMs);
+            totalSamples += MsToSamples(segment.DurationMs, sampleRate) +
+                            MsToSamples(segment.SilenceAfterMs, sampleRate);
         }
 
         if (totalSamples <= 0)
         {
-            totalSamples = MsToSamples(100);
+            totalSamples = MsToSamples(100, sampleRate);
         }
 
         var samples = new float[totalSamples];
@@ -66,13 +129,13 @@ internal static class AnimalSoundSynth
         for (int s = 0; s < voice.Segments.Count; s++)
         {
             VoiceSegment segment = voice.Segments[s];
-            int length = MsToSamples(segment.DurationMs);
+            int length = MsToSamples(segment.DurationMs, sampleRate);
             double phase = 0.0;
 
             for (int i = 0; i < length && writeIndex < samples.Length; i++, writeIndex++)
             {
                 float progress = length <= 1 ? 0f : i / (float)(length - 1);
-                float timeSeconds = i / (float)SampleRate;
+                float timeSeconds = i / (float)sampleRate;
 
                 // Frekans kayması + vibrato
                 float frequency = segment.StartFrequency +
@@ -85,7 +148,7 @@ internal static class AnimalSoundSynth
                 }
 
                 // Faz biriktirme: frekans değişse bile dalga sürekliliği bozulmaz.
-                phase += 2.0 * Math.PI * frequency / SampleRate;
+                phase += 2.0 * Math.PI * frequency / sampleRate;
                 if (phase > 2.0 * Math.PI)
                 {
                     phase -= 2.0 * Math.PI;
@@ -100,8 +163,8 @@ internal static class AnimalSoundSynth
                 }
 
                 // Zarf: yükseliş / sönüş
-                float elapsedMs = i * 1000f / SampleRate;
-                float remainingMs = (length - i) * 1000f / SampleRate;
+                float elapsedMs = i * 1000f / sampleRate;
+                float remainingMs = (length - i) * 1000f / sampleRate;
                 float envelope = 1f;
 
                 if (segment.AttackMs > 0f)
@@ -125,16 +188,14 @@ internal static class AnimalSoundSynth
             }
 
             // Segment sonrası sessizlik (dizi zaten 0 ile dolu)
-            writeIndex += MsToSamples(segment.SilenceAfterMs);
+            writeIndex += MsToSamples(segment.SilenceAfterMs, sampleRate);
             if (writeIndex > samples.Length)
             {
                 writeIndex = samples.Length;
             }
         }
 
-        Normalize(samples);
-        ApplyEdgeFade(samples);
-        return BuildWav(samples);
+        return samples;
     }
 
     /// <summary>Verilen dalga biçiminden anlık örnek üretir.</summary>
@@ -186,9 +247,9 @@ internal static class AnimalSoundSynth
     }
 
     /// <summary>Baş ve sona 5 ms yumuşatma uygular (klik sesini engeller).</summary>
-    private static void ApplyEdgeFade(float[] samples)
+    private static void ApplyEdgeFade(float[] samples, int sampleRate)
     {
-        int fade = MsToSamples((int)EdgeFadeMs);
+        int fade = MsToSamples((int)EdgeFadeMs, sampleRate);
         if (fade <= 1 || samples.Length < fade * 2)
         {
             return;
@@ -238,6 +299,6 @@ internal static class AnimalSoundSynth
         return stream.ToArray();
     }
 
-    private static int MsToSamples(int milliseconds) =>
-        milliseconds <= 0 ? 0 : (int)(milliseconds * (long)SampleRate / 1000);
+    private static int MsToSamples(int milliseconds, int sampleRate) =>
+        milliseconds <= 0 ? 0 : (int)(milliseconds * (long)sampleRate / 1000);
 }

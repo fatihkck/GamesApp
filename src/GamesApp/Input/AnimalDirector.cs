@@ -9,9 +9,9 @@ namespace GamesApp.Input;
 /// çıkar; ardından eşik yeniden rastgele belirlenir. Böylece tahmin edilemez ama
 /// sık gerçekleşir.
 ///
-/// SEÇİM (shuffle bag): 8 hayvan karıştırılır ve sırayla tüketilir; torba boşalınca
-/// yeniden karıştırılır. Böylece aynı hayvan üst üste gelmez ve "önce kedi, birkaç
-/// tuş sonra köpek" akışı doğal olarak oluşur.
+/// SEÇİM (shuffle bag): Tüm hayvanlar karıştırılır ve sırayla tüketilir; torba boşalınca
+/// yeniden karıştırılır (bkz. <see cref="AnimalShuffleBag"/>). Böylece aynı hayvan üst
+/// üste gelmez ve "önce kedi, birkaç tuş sonra köpek" akışı doğal olarak oluşur.
 ///
 /// Yalnızca gerçek nota basımları sayılır; klavye auto-repeat tekrarları
 /// <see cref="UI.MainForm"/> tarafındaki basılı tuş takibi sayesinde buraya hiç gelmez.
@@ -25,15 +25,15 @@ internal sealed class AnimalDirector
     private const int MaxThreshold = 14;
 
     private readonly Random _random;
-    private readonly List<AnimalKind> _bag = new(AnimalInfo.All.Length);
+    private readonly AnimalShuffleBag _bag;
 
     private int _pressCount;
 
     public AnimalDirector(Random? random = null)
     {
         _random = random ?? new Random();
+        _bag = new AnimalShuffleBag(_random);
         Threshold = PickThreshold();
-        RefillBag();
     }
 
     /// <summary>Bir sonraki hayvan için gereken nota basımı sayısı.</summary>
@@ -58,7 +58,7 @@ internal sealed class AnimalDirector
 
         _pressCount = 0;
         Threshold = PickThreshold();
-        kind = TakeNext();
+        kind = _bag.Take();
         return true;
     }
 
@@ -67,35 +67,8 @@ internal sealed class AnimalDirector
     {
         _pressCount = 0;
         Threshold = PickThreshold();
-        RefillBag();
+        _bag.Refill();
     }
 
     private int PickThreshold() => _random.Next(MinThreshold, MaxThreshold + 1);
-
-    /// <summary>Torbadan sıradaki hayvanı alır; torba boşsa yeniden karıştırır.</summary>
-    private AnimalKind TakeNext()
-    {
-        if (_bag.Count == 0)
-        {
-            RefillBag();
-        }
-
-        int lastIndex = _bag.Count - 1;
-        AnimalKind kind = _bag[lastIndex];
-        _bag.RemoveAt(lastIndex);
-        return kind;
-    }
-
-    /// <summary>Torbayı tüm hayvanlarla doldurup Fisher-Yates ile karıştırır.</summary>
-    private void RefillBag()
-    {
-        _bag.Clear();
-        _bag.AddRange(AnimalInfo.All);
-
-        for (int i = _bag.Count - 1; i > 0; i--)
-        {
-            int j = _random.Next(i + 1);
-            (_bag[i], _bag[j]) = (_bag[j], _bag[i]);
-        }
-    }
 }

@@ -48,7 +48,9 @@ internal sealed class DrumGameControl : Control, IGameModule
         Controls.Add(_canvas);
     }
 
-    public string MenuTitle => "🥁 Davul";
+    public string MenuIcon => "🥁";
+
+    public string MenuTitle => "Davul";
 
     public Color MenuColor => Theme.ColorFromHsv(15.0, 0.85, 0.90);
 

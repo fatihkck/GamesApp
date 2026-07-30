@@ -74,6 +74,22 @@ internal static class AnimalArtist
             case AnimalKind.Frog:
                 DrawFrog(g, box, alpha, brush, pen);
                 break;
+
+            case AnimalKind.Elephant:
+                DrawElephant(g, box, alpha, brush, pen);
+                break;
+
+            case AnimalKind.Lion:
+                DrawLion(g, box, alpha, brush, pen);
+                break;
+
+            case AnimalKind.Monkey:
+                DrawMonkey(g, box, alpha, brush, pen);
+                break;
+
+            case AnimalKind.Penguin:
+                DrawPenguin(g, box, alpha, brush, pen);
+                break;
         }
     }
 
@@ -340,6 +356,187 @@ internal static class AnimalArtist
 
         // Geniş gülüş
         g.DrawArc(pen, Rect(b, 0.18f, 0.44f, 0.64f, 0.36f), 20f, 140f);
+    }
+
+    /// <summary>Fil: gri, kocaman kulaklar, aşağı sarkan hortum, küçük fildişleri.</summary>
+    private static void DrawElephant(Graphics g, RectangleF b, float a, SolidBrush brush, Pen pen)
+    {
+        Color hide = Color.FromArgb(255, 152, 158, 182);
+        Color hideDark = Color.FromArgb(255, 108, 114, 142);
+        Color tusk = Color.FromArgb(255, 248, 244, 226);
+
+        // Kulaklar (baştan önce: kontur baş tarafından kesilmesin)
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.00f, 0.12f, 0.34f, 0.52f), hideDark, a);
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.66f, 0.12f, 0.34f, 0.52f), hideDark, a);
+
+        // Baş
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.20f, 0.08f, 0.60f, 0.58f), hide, a);
+
+        // Hortum: yukarıdan aşağı incelen, ucu hafif kıvrık gövde.
+        PointF[] trunk =
+        {
+            Pt(b, 0.41f, 0.52f),
+            Pt(b, 0.40f, 0.74f),
+            Pt(b, 0.37f, 0.88f),
+            Pt(b, 0.45f, 0.99f),
+            Pt(b, 0.60f, 0.96f),
+            Pt(b, 0.52f, 0.86f),
+            Pt(b, 0.55f, 0.74f),
+            Pt(b, 0.59f, 0.52f)
+        };
+        FillAndOutlinePolygon(g, brush, pen, trunk, hide, a);
+
+        // Hortum kırışıkları
+        float savedWidth = pen.Width;
+        pen.Color = Theme.WithAlpha(hideDark, a);
+        pen.Width = Math.Max(2f, b.Width * 0.014f);
+        for (int i = 0; i < 3; i++)
+        {
+            float y = 0.60f + i * 0.08f;
+            g.DrawLine(pen, Pt(b, 0.42f - i * 0.01f, y), Pt(b, 0.58f - i * 0.01f, y));
+        }
+
+        pen.Width = savedWidth;
+        pen.Color = Theme.WithAlpha(Outline, a);
+
+        // Fildişleri (hortumun iki yanında küçük üçgenler)
+        PointF[] leftTusk = { Pt(b, 0.33f, 0.60f), Pt(b, 0.40f, 0.62f), Pt(b, 0.28f, 0.80f) };
+        PointF[] rightTusk = { Pt(b, 0.67f, 0.60f), Pt(b, 0.60f, 0.62f), Pt(b, 0.72f, 0.80f) };
+        FillAndOutlinePolygon(g, brush, pen, leftTusk, tusk, a);
+        FillAndOutlinePolygon(g, brush, pen, rightTusk, tusk, a);
+
+        // Gözler
+        DrawEye(g, brush, pen, Rect(b, 0.29f, 0.28f, 0.14f, 0.15f), a, 0.6f);
+        DrawEye(g, brush, pen, Rect(b, 0.57f, 0.28f, 0.14f, 0.15f), a, 0.6f);
+    }
+
+    /// <summary>Aslan: çevresi kabarık yele, açık ten yüz, üçgen burun ve bıyıklar.</summary>
+    private static void DrawLion(Graphics g, RectangleF b, float a, SolidBrush brush, Pen pen)
+    {
+        Color mane = Color.FromArgb(255, 206, 112, 34);
+        Color maneDark = Color.FromArgb(255, 164, 80, 22);
+        Color fur = Color.FromArgb(255, 250, 180, 68);
+        Color muzzle = Color.FromArgb(255, 252, 226, 184);
+        Color nose = Color.FromArgb(255, 196, 84, 96);
+
+        // Yele: çember üzerine dizilmiş kabarcıklar (bulut silueti gibi).
+        const int puffCount = 11;
+        for (int i = 0; i < puffCount; i++)
+        {
+            double angle = i * (Math.PI * 2.0 / puffCount) - Math.PI / 2.0;
+            float cx = 0.5f + (float)Math.Cos(angle) * 0.36f;
+            float cy = 0.5f + (float)Math.Sin(angle) * 0.36f;
+            FillAndOutlineEllipse(
+                g,
+                brush,
+                pen,
+                Rect(b, cx - 0.13f, cy - 0.13f, 0.26f, 0.26f),
+                i % 2 == 0 ? mane : maneDark,
+                a);
+        }
+
+        // Yele gövdesi: kabarcıkların iç konturlarını kapatır.
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.13f, 0.13f, 0.74f, 0.74f), mane, a);
+
+        // Kulaklar
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.22f, 0.14f, 0.16f, 0.16f), fur, a);
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.62f, 0.14f, 0.16f, 0.16f), fur, a);
+
+        // Yüz
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.21f, 0.21f, 0.58f, 0.58f), fur, a);
+
+        // Gözler
+        DrawEye(g, brush, pen, Rect(b, 0.31f, 0.36f, 0.14f, 0.15f), a, 0.6f);
+        DrawEye(g, brush, pen, Rect(b, 0.55f, 0.36f, 0.14f, 0.15f), a, 0.6f);
+
+        // Ağız bölgesi + burun + gülüş
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.34f, 0.52f, 0.32f, 0.24f), muzzle, a);
+        PointF[] noseShape = { Pt(b, 0.44f, 0.55f), Pt(b, 0.56f, 0.55f), Pt(b, 0.50f, 0.63f) };
+        FillAndOutlinePolygon(g, brush, pen, noseShape, nose, a);
+        g.DrawArc(pen, Rect(b, 0.39f, 0.60f, 0.11f, 0.10f), 0f, 130f);
+        g.DrawArc(pen, Rect(b, 0.50f, 0.60f, 0.11f, 0.10f), 50f, 130f);
+
+        // Bıyıklar
+        for (int i = 0; i < 2; i++)
+        {
+            float y = 0.58f + i * 0.05f;
+            g.DrawLine(pen, Pt(b, 0.36f, y), Pt(b, 0.18f, y - 0.04f + i * 0.05f));
+            g.DrawLine(pen, Pt(b, 0.64f, y), Pt(b, 0.82f, y - 0.04f + i * 0.05f));
+        }
+    }
+
+    /// <summary>Maymun: kahverengi kafa, yanlarda yuvarlak kulaklar, geniş bej yüz ve kocaman gülüş.</summary>
+    private static void DrawMonkey(Graphics g, RectangleF b, float a, SolidBrush brush, Pen pen)
+    {
+        Color fur = Color.FromArgb(255, 154, 106, 66);
+        Color furDark = Color.FromArgb(255, 118, 78, 48);
+        Color face = Color.FromArgb(255, 240, 198, 160);
+
+        // Kulaklar (baştan önce)
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.00f, 0.32f, 0.24f, 0.28f), fur, a);
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.76f, 0.32f, 0.24f, 0.28f), fur, a);
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.05f, 0.38f, 0.13f, 0.16f), face, a);
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.82f, 0.38f, 0.13f, 0.16f), face, a);
+
+        // Baş
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.14f, 0.08f, 0.72f, 0.78f), fur, a);
+
+        // NOT: Tepeye tüy çizgisi KONMADI; denendi ama ince çizgiler küçük boyutta
+        // anten gibi görünüyordu. Maymunu kulakları ve geniş yüzü tanıtıyor.
+        float savedWidth = pen.Width;
+
+        // Yüz alanı: geniş, aşağı doğru genişleyen bej oval.
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.23f, 0.26f, 0.54f, 0.60f), face, a);
+
+        // Alın çizgisi (kaş): yüzü canlandırır.
+        pen.Width = Math.Max(2.5f, b.Width * 0.018f);
+        pen.Color = Theme.WithAlpha(furDark, a);
+        g.DrawArc(pen, Rect(b, 0.30f, 0.30f, 0.16f, 0.12f), 200f, 140f);
+        g.DrawArc(pen, Rect(b, 0.54f, 0.30f, 0.16f, 0.12f), 200f, 140f);
+        pen.Width = savedWidth;
+        pen.Color = Theme.WithAlpha(Outline, a);
+
+        // Gözler
+        DrawEye(g, brush, pen, Rect(b, 0.32f, 0.40f, 0.15f, 0.16f), a, 0.6f);
+        DrawEye(g, brush, pen, Rect(b, 0.53f, 0.40f, 0.15f, 0.16f), a, 0.6f);
+
+        // Burun delikleri
+        Fill(g, brush, Rect(b, 0.44f, 0.60f, 0.05f, 0.04f), furDark, a);
+        Fill(g, brush, Rect(b, 0.52f, 0.60f, 0.05f, 0.04f), furDark, a);
+
+        // Kocaman gülüş
+        g.DrawArc(pen, Rect(b, 0.32f, 0.58f, 0.36f, 0.24f), 20f, 140f);
+    }
+
+    /// <summary>Penguen: siyah kafa, beyaz yüz, turuncu gaga ve yanlarda sarı lekeler.</summary>
+    private static void DrawPenguin(Graphics g, RectangleF b, float a, SolidBrush brush, Pen pen)
+    {
+        Color body = Color.FromArgb(255, 54, 60, 88);
+        Color belly = Color.FromArgb(255, 248, 249, 254);
+        Color beak = Color.FromArgb(255, 250, 158, 38);
+        Color patch = Color.FromArgb(255, 252, 208, 72);
+
+        // Baş
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.14f, 0.08f, 0.72f, 0.80f), body, a);
+
+        // NOT: Tepeye tüy çizgisi KONMADI (maymunda olduğu gibi anten etkisi veriyordu);
+        // pengueni siyah başı, beyaz yüzü ve sarı yan lekeleri tanıtıyor.
+
+        // Kral penguen lekeleri (kulak hizasında sarı)
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.12f, 0.38f, 0.16f, 0.22f), patch, a);
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.72f, 0.38f, 0.16f, 0.22f), patch, a);
+
+        // Beyaz yüz alanı
+        FillAndOutlineEllipse(g, brush, pen, Rect(b, 0.26f, 0.26f, 0.48f, 0.60f), belly, a);
+
+        // Gözler
+        DrawEye(g, brush, pen, Rect(b, 0.33f, 0.38f, 0.13f, 0.15f), a, 0.6f);
+        DrawEye(g, brush, pen, Rect(b, 0.54f, 0.38f, 0.13f, 0.15f), a, 0.6f);
+
+        // Gaga: aşağı bakan üçgen + ağız çizgisi
+        PointF[] beakShape = { Pt(b, 0.39f, 0.60f), Pt(b, 0.61f, 0.60f), Pt(b, 0.50f, 0.82f) };
+        FillAndOutlinePolygon(g, brush, pen, beakShape, beak, a);
+        g.DrawLine(pen, Pt(b, 0.42f, 0.66f), Pt(b, 0.58f, 0.66f));
     }
 
     // ---------------- Yardımcılar ----------------

@@ -25,12 +25,11 @@ internal sealed class ShellForm : Form
 
     private readonly Panel _menuBar;
     private readonly Panel _gameHost;
-    private readonly List<Button> _gameButtons = new();
+    private readonly GameMenuStrip _gameStrip;
     private readonly Button _exitButton;
     private readonly Label _statusLabel;
     private readonly System.Windows.Forms.Timer _focusTimer;
 
-    private readonly Font _menuFont = new("Segoe UI", 20f, FontStyle.Bold);
     private readonly Font _exitFont = new("Segoe UI", 18f, FontStyle.Bold);
     private readonly Font _statusFont = new("Segoe UI", 10f, FontStyle.Regular);
 
@@ -80,31 +79,11 @@ internal sealed class ShellForm : Form
             TabStop = false
         };
 
-        // --- Oyun butonları (fare ile tek oyun değiştirme yolu) ---
-        for (int i = 0; i < games.Count; i++)
-        {
-            IGameModule game = games[i];
-            var button = new Button
-            {
-                Text = game.MenuTitle,
-                Font = _menuFont,
-                ForeColor = Color.White,
-                BackColor = Theme.Lerp(game.MenuColor, Color.Black, 0.55f),
-                FlatStyle = FlatStyle.Flat,
-                TabStop = false,
-                Cursor = Cursors.Hand,
-                UseVisualStyleBackColor = false,
-                Tag = i
-            };
-            button.FlatAppearance.BorderColor = Theme.Lerp(game.MenuColor, Color.White, 0.2f);
-            button.FlatAppearance.BorderSize = 2;
-            button.FlatAppearance.MouseOverBackColor = Theme.Lerp(game.MenuColor, Color.Black, 0.35f);
-            button.FlatAppearance.MouseDownBackColor = game.MenuColor;
-            button.Click += OnGameButtonClick;
-
-            _gameButtons.Add(button);
-            _menuBar.Controls.Add(button);
-        }
+        // --- Oyun şeridi (fare ile tek oyun değiştirme yolu) ---
+        // Çok oyunlu menüyü sığdırma/sayfalama işini şerit kendisi yapar.
+        _gameStrip = new GameMenuStrip(games);
+        _gameStrip.GameSelected += OnGameSelected;
+        _menuBar.Controls.Add(_gameStrip);
 
         // --- Çıkış butonu (fare ile tek çıkış yolu) ---
         _exitButton = new Button
@@ -125,16 +104,18 @@ internal sealed class ShellForm : Form
         _exitButton.Click += OnExitButtonClick;
         _menuBar.Controls.Add(_exitButton);
 
-        // --- Durum yazısı (ses uyarısı / ipucu) ---
+        // --- Durum yazısı: YALNIZCA bir sorun varsa görünür ---
+        // Normal çalışmada menüdeki her piksel oyun butonlarına ayrılır; kalıcı bir
+        // ipucu yazısı yer kaplar ama ebeveyn onu bir kez okuduktan sonra işe yaramaz.
         _statusLabel = new Label
         {
-            Text = soundAvailable
-                ? "Oyun değiştirmek ve çıkmak için fareyi kullanın"
-                : "UYARI: ses aygıtı bulunamadı, sessiz çalışıyor",
+            Text = "UYARI: ses aygıtı bulunamadı, sessiz çalışıyor",
             Font = _statusFont,
-            ForeColor = soundAvailable ? Theme.Hint : Theme.Warning,
+            ForeColor = Theme.Warning,
             BackColor = Color.Transparent,
-            AutoSize = true
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Visible = !soundAvailable
         };
         _menuBar.Controls.Add(_statusLabel);
 
@@ -193,6 +174,7 @@ internal sealed class ShellForm : Form
         {
             _statusLabel.Text = $"UYARI: klavye kancası kurulamadı, hata {Hook.LastError}";
             _statusLabel.ForeColor = Theme.Warning;
+            _statusLabel.Visible = true;
             LayoutChildren();
         }
 
@@ -261,34 +243,13 @@ internal sealed class ShellForm : Form
         _gameHost.Controls.Add(next.View);
         next.Start();
 
-        UpdateMenuSelection(index);
+        // Şerit seçili oyunu işaretler ve gerekiyorsa o sayfaya geçer.
+        _gameStrip.SetSelectedGame(index);
     }
 
-    private void OnGameButtonClick(object? sender, EventArgs e)
+    private void OnGameSelected(int index)
     {
-        if (sender is Button { Tag: int index })
-        {
-            SwitchToGame(index);
-        }
-    }
-
-    /// <summary>Seçili oyunun butonu parlak, diğerleri sönük gösterilir.</summary>
-    private void UpdateMenuSelection(int selectedIndex)
-    {
-        for (int i = 0; i < _gameButtons.Count; i++)
-        {
-            Button button = _gameButtons[i];
-            Color accent = _games[i].MenuColor;
-            bool selected = i == selectedIndex;
-
-            button.BackColor = selected
-                ? Theme.Lerp(accent, Color.Black, 0.15f)
-                : Theme.Lerp(accent, Color.Black, 0.60f);
-            button.FlatAppearance.BorderColor = selected
-                ? Color.White
-                : Theme.Lerp(accent, Color.White, 0.2f);
-            button.FlatAppearance.BorderSize = selected ? 3 : 2;
-        }
+        SwitchToGame(index);
     }
 
     // ---------------- Yerleşim ----------------
@@ -308,27 +269,32 @@ internal sealed class ShellForm : Form
             return;
         }
 
-        int menuHeight = Math.Max(84, (int)(height * 0.10));
+        // Menü çubuğu: simge + ad iki satır sığacak kadar yüksek olmalı.
+        int menuHeight = Math.Max(96, (int)(height * 0.11));
         _menuBar.SetBounds(0, 0, width, menuHeight);
         _gameHost.SetBounds(0, menuHeight, width, height - menuHeight);
 
-        int margin = 12;
-        int buttonHeight = menuHeight - margin * 2;
-        int buttonWidth = Math.Max(210, (int)(width * 0.14));
+        // Uyarı yazısı görünüyorsa menünün altından ince bir şerit alır; görünmüyorsa
+        // tüm yükseklik oyun butonlarına kalır.
+        int statusHeight = _statusLabel.Visible ? 20 : 0;
+        int rowHeight = menuHeight - statusHeight;
 
-        int x = margin;
-        for (int i = 0; i < _gameButtons.Count; i++)
+        int margin = 10;
+        int exitWidth = Math.Clamp((int)(width * 0.10), 150, 220);
+
+        _exitButton.SetBounds(
+            width - exitWidth - margin,
+            margin,
+            exitWidth,
+            Math.Max(24, rowHeight - margin * 2));
+
+        // Oyun şeridi çıkış butonuna kadar uzanır; sığdırma/sayfalama işini kendi yapar.
+        _gameStrip.SetBounds(0, 0, Math.Max(1, width - exitWidth - margin * 2), rowHeight);
+
+        if (statusHeight > 0)
         {
-            _gameButtons[i].SetBounds(x, margin, buttonWidth, buttonHeight);
-            x += buttonWidth + margin;
+            _statusLabel.SetBounds(margin, rowHeight, Math.Max(1, width - margin * 2), statusHeight);
         }
-
-        int exitWidth = Math.Max(170, (int)(width * 0.10));
-        _exitButton.SetBounds(width - exitWidth - margin, margin, exitWidth, buttonHeight);
-
-        _statusLabel.Location = new Point(
-            width - exitWidth - margin * 2 - _statusLabel.PreferredWidth,
-            (menuHeight - _statusLabel.PreferredHeight) / 2);
     }
 
     // ---------------- Kiosk davranışı ----------------
@@ -452,11 +418,7 @@ internal sealed class ShellForm : Form
             _focusTimer.Stop();
             _focusTimer.Dispose();
 
-            foreach (Button button in _gameButtons)
-            {
-                button.Click -= OnGameButtonClick;
-            }
-
+            _gameStrip.GameSelected -= OnGameSelected;
             _exitButton.Click -= OnExitButtonClick;
 
             if (Hook != null)
@@ -473,7 +435,6 @@ internal sealed class ShellForm : Form
                 game.Dispose();
             }
 
-            _menuFont.Dispose();
             _exitFont.Dispose();
             _statusFont.Dispose();
         }

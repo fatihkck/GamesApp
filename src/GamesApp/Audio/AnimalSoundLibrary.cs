@@ -76,8 +76,22 @@ internal sealed class AnimalSoundLibrary
         (AnimalKind.Chick, new[] { "chick", "civciv", "bird", "kus", "chirp", "tweet", "sparrow" }),
         (AnimalKind.Duck, new[] { "duck", "ordek", "quack", "vak" }),
         (AnimalKind.Rooster, new[] { "rooster", "horoz", "cock", "crow", "tavuk", "hen", "chicken" }),
-        (AnimalKind.Frog, new[] { "frog", "kurbaga", "croak", "toad", "virak" })
+        (AnimalKind.Frog, new[] { "frog", "kurbaga", "croak", "toad", "virak" }),
+        (AnimalKind.Elephant, new[] { "elephant", "fil", "hortum", "trumpet" }),
+        (AnimalKind.Lion, new[] { "lion", "aslan", "roar", "kukre" }),
+        (AnimalKind.Monkey, new[] { "monkey", "maymun", "chimp", "sempanze", "ape" }),
+        (AnimalKind.Penguin, new[] { "penguin", "penguen" })
     };
+
+    /// <summary>
+    /// Bu uzunluğa kadar olan anahtar kelimeler yalnızca TAM SÖZCÜK olarak eşleşir.
+    ///
+    /// NEDEN: "fil" gibi çok kısa anahtarlar başka sözcüklerin içinde geçebiliyor
+    /// ("sound file" -> fil), bu da alakasız bir dosyayı yanlış hayvana bağlardı.
+    /// Uzun anahtarlar (chick, cattle, chicken...) parça olarak eşleşmeye devam eder;
+    /// oradaki çakışmalar "daha uzun anahtar kazanır" kuralıyla çözülür.
+    /// </summary>
+    private const int WholeWordKeywordLength = 3;
 
     private readonly Dictionary<AnimalKind, List<SoundFileInfo>> _filesByAnimal = new();
     private readonly List<SoundFileInfo> _allValidFiles = new();
@@ -165,7 +179,9 @@ internal sealed class AnimalSoundLibrary
     /// Kurallar:
     ///  - Dosya adında <b>daha erken</b> geçen anahtar kelime kazanır.
     ///  - Aynı konumda birden fazla anahtar varsa <b>daha uzun</b> olan kazanır
-    ///    (ör. "cattle" -> inek, "cat" değil; "chicken" -> horoz, "chick" değil).
+    ///    (ör. "chicken" -> horoz, "chick" değil).
+    ///  - Çok kısa anahtarlar (<see cref="WholeWordKeywordLength"/> harf ve altı) yalnızca
+    ///    tam sözcük olarak eşleşir (ör. "cattle" içindeki "cat" sayılmaz, "cattle" sayılır).
     ///  - Yine eşitse tabloda ilk tanımlı hayvan kazanır.
     ///  - Hiçbir anahtara uymazsa null döner (dosya yok sayılır).
     /// </summary>
@@ -193,7 +209,10 @@ internal sealed class AnimalSoundLibrary
             for (int k = 0; k < keywords.Length; k++)
             {
                 string keyword = keywords[k];
-                int index = normalized.IndexOf(keyword, StringComparison.Ordinal);
+                int index = keyword.Length <= WholeWordKeywordLength
+                    ? IndexOfWord(normalized, keyword)
+                    : normalized.IndexOf(keyword, StringComparison.Ordinal);
+
                 if (index < 0)
                 {
                     continue;
@@ -212,6 +231,39 @@ internal sealed class AnimalSoundLibrary
         }
 
         return best;
+    }
+
+    /// <summary>
+    /// Sadeleştirilmiş metinde anahtarı TAM SÖZCÜK olarak arar (öncesi ve sonrası
+    /// boşluk ya da metin sınırı olmalı). Bulunamazsa -1 döner.
+    /// <see cref="Normalize"/> tüm ayırıcıları tek boşluğa indirdiği için sözcük sınırı
+    /// kontrolü boşluk bakmakla yeterlidir.
+    /// </summary>
+    private static int IndexOfWord(string text, string word)
+    {
+        int from = 0;
+
+        while (from <= text.Length - word.Length)
+        {
+            int index = text.IndexOf(word, from, StringComparison.Ordinal);
+            if (index < 0)
+            {
+                return -1;
+            }
+
+            bool startsWord = index == 0 || text[index - 1] == ' ';
+            int after = index + word.Length;
+            bool endsWord = after == text.Length || text[after] == ' ';
+
+            if (startsWord && endsWord)
+            {
+                return index;
+            }
+
+            from = index + 1;
+        }
+
+        return -1;
     }
 
     /// <summary>

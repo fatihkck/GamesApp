@@ -69,7 +69,9 @@ internal sealed class BalloonGameControl : Control, IGameModule
         _musicTimer.Tick += OnMusicTimerTick;
     }
 
-    public string MenuTitle => "🎈 Balon";
+    public string MenuIcon => "🎈";
+
+    public string MenuTitle => "Balon";
 
     public Color MenuColor => Theme.ColorFromHsv(330.0, 0.75, 0.92);
 
