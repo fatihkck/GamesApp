@@ -101,6 +101,11 @@ sahnede en fazla `ZooStageView.MaxActors` hayvan bulunur (4 duran + 2 gitmekte o
 fazlası doğrudan kaldırılır. Selftest `ZooWelcome` ve `ZooAfterPlay` ile ikisini de
 doğrular.
 
+Cee-e oyununda perde kapalıyken bile sahne canlıdır (perde salınır, çerçeve ampulleri
+sırayla yanar, yıldızlar parıldar); oyuna girişte karşılama karakteri fırlar ve perde
+3,5 saniye kapalı kalırsa bir karakter kendiliğinden "Cee-e!" yapıp çocuğu basmaya
+davet eder. Selftest `PeekabooWelcome` ve `PeekabooAfterPlay` ile doğrular.
+
 ## 9. Sürpriz ödüller (hayvan sürprizi) — oyun bazında opsiyonel
 
 Her 8-14 eylemden sonra sahneye rastgele bir hayvan çıkar (sesiyle birlikte). Tahmin
@@ -118,6 +123,12 @@ oyunun kendi eyleminde yeterince güçlüyse eklenmez.
 **ESNETİLDİ — Hayvanat Bahçesi:** Bu oyunda ayrı bir sürpriz katmanı **yoktur**; hayvanın
 kendisi oyunun ana mekaniğidir. Sürprizin üstüne sürpriz koymak sahneyi kalabalıklaştırır
 ve neden-sonuç ilişkisini bulanıklaştırırdı.
+
+**ESNETİLDİ — Cee-e:** Aynı gerekçeyle bu oyunda da ayrı bir sürpriz katmanı **yoktur**:
+perdeden fırlayan karakterin kendisi zaten sürprizdir. Çeşitlilik iki ayrı torbayla
+sağlanır: karakter torbası (12 hayvan) ve komik ses torbası (kıkırdama, kahkaha, alkış,
+zil parıltısı, parti borusu, kaydırmalı düdük) bağımsız karıştırılır; aynı ikili tekrar
+üst üste gelmez.
 
 ## 10. Çökme ve kilitlenme kesinlikle olmayacak
 

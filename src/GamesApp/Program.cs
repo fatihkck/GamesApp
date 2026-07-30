@@ -4,6 +4,7 @@ using GamesApp.Audio;
 using GamesApp.Games;
 using GamesApp.Games.Bubbles;
 using GamesApp.Games.Drums;
+using GamesApp.Games.Peekaboo;
 using GamesApp.Games.Piano;
 using GamesApp.Games.Zoo;
 using GamesApp.Input;
@@ -115,7 +116,8 @@ internal static class Program
             new PianoGameControl(synth, animalSound),
             new DrumGameControl(drums, animalSound),
             new BalloonGameControl(mixer, music),
-            new ZooGameControl(mixer)
+            new ZooGameControl(mixer),
+            new PeekabooGameControl(mixer)
         };
 
         using var form = new ShellForm(games, synth.IsAvailable, selfTestMode: false);
@@ -256,6 +258,39 @@ internal static class Program
 
             lines.Add($"PopSynth: {popsRendered}/{PopSoundSynth.VariantCount} rendered");
             if (popsRendered != PopSoundSynth.VariantCount)
+            {
+                success = false;
+            }
+
+            // --- "Cee-e!" komik sesleri: her varyant üretiliyor ve GÜR mü? ---
+            int cheersRendered = 0;
+            for (int i = 0; i < CheerSoundSynth.VariantCount; i++)
+            {
+                short[] sample = CheerSoundSynth.Render(i);
+
+                int peak = 0;
+                for (int j = 0; j < sample.Length; j++)
+                {
+                    int magnitude = Math.Abs((int)sample[j]);
+                    if (magnitude > peak)
+                    {
+                        peak = magnitude;
+                    }
+                }
+
+                // En az 8820 örnek (~200 ms) ve tepe değeri tam ölçeğin %60'ı üzerinde.
+                if (sample.Length >= 8820 && peak >= (int)(short.MaxValue * 0.6f))
+                {
+                    cheersRendered++;
+                }
+                else
+                {
+                    lines.Add($"CheerSynthFail: varyant {i} (len {sample.Length}, peak {peak})");
+                }
+            }
+
+            lines.Add($"CheerSynth: {cheersRendered}/{CheerSoundSynth.VariantCount} rendered");
+            if (cheersRendered != CheerSoundSynth.VariantCount)
             {
                 success = false;
             }
@@ -492,12 +527,13 @@ internal static class Program
             // uygulama çalışmaya devam eder, bu yüzden testi düşürmez.
             lines.Add($"MciPath: {TestMciPath()}");
 
-            // --- Kabuk + dört oyunun uçtan uca denemesi ---
+            // --- Kabuk + beş oyunun uçtan uca denemesi ---
             var pianoGame = new PianoGameControl(synth, animalSound);
             var drumGame = new DrumGameControl(drums, animalSound);
             var balloonGame = new BalloonGameControl(mixer, music);
             var zooGame = new ZooGameControl(mixer);
-            var games = new IGameModule[] { pianoGame, drumGame, balloonGame, zooGame };
+            var peekabooGame = new PeekabooGameControl(mixer);
+            var games = new IGameModule[] { pianoGame, drumGame, balloonGame, zooGame, peekabooGame };
 
             // --- Menü sözleşmesi: her oyunun simgesi ve adı olmalı ---
             // Simge kritik: menü daraldığında ad gizlenir, geriye yalnızca simge kalır.
@@ -558,11 +594,15 @@ internal static class Program
             bool switchedToDrums = false;
             bool switchedToBalloons = false;
             bool switchedToZoo = false;
+            bool switchedToPeekaboo = false;
             bool startedOnPiano = false;
             int balloonsOnField = 0;
             int balloonsAfterPlay = 0;
             int zooWelcomeAnimals = 0;
             int zooAnimalsAfterPlay = 0;
+            int audiblePeekabooKeys = 0;
+            bool peekabooWelcome = false;
+            bool peekabooAfterPlay = false;
 
             // Bireysel olarak yutulan özel tuşlar: hiçbiri sessiz kalmamalı.
             // Esc, LWin, RWin, Alt, Tab, Ctrl, Shift, CapsLock
@@ -675,6 +715,31 @@ internal static class Program
 
                     zooAnimalsAfterPlay = zooGame.AnimalCount;
 
+                    // --- "Cee-e!" oyununa geç ve aynı yoldan doğrula ---
+                    form.SwitchToGame(4);
+                    switchedToPeekaboo = ReferenceEquals(form.ActiveGame, peekabooGame);
+
+                    // Oyuna girişte ilk karakter fırladı mı? (Sahne boş başlamaz.)
+                    peekabooWelcome = peekabooGame.HasCharacter;
+
+                    for (int i = 0; i < specialKeys.Length; i++)
+                    {
+                        if (peekabooGame.SelfTestFeedKey(specialKeys[i]))
+                        {
+                            audiblePeekabooKeys++;
+                        }
+                    }
+
+                    // Uzun oynayış: "Cee-e!" tetikle + kare ilerlet döngüsünde sahnede
+                    // hep bir karakter olmalı (her basış yenisini fırlatır).
+                    for (int i = 0; i < 60; i++)
+                    {
+                        peekabooGame.SelfTestFeedKey(0x41 + (i % 20));
+                        peekabooGame.SelfTestAdvance(0.25f);
+                    }
+
+                    peekabooAfterPlay = peekabooGame.HasCharacter;
+
                     form.SelfTestClose();
                 }
             };
@@ -773,6 +838,32 @@ internal static class Program
                 success = false;
             }
 
+            lines.Add(switchedToPeekaboo ? "GameSwitch(Peekaboo): OK" : "GameSwitch(Peekaboo): FAIL");
+            if (!switchedToPeekaboo)
+            {
+                success = false;
+            }
+
+            lines.Add(peekabooWelcome ? "PeekabooWelcome: OK" : "PeekabooWelcome: FAIL");
+            if (!peekabooWelcome)
+            {
+                success = false;
+            }
+
+            lines.Add($"SpecialKeys(Peekaboo): {audiblePeekabooKeys}/{specialKeys.Length} reacted");
+            if (audiblePeekabooKeys != specialKeys.Length)
+            {
+                success = false;
+            }
+
+            // 60 tetiklemeden sonra sahnede hâlâ bir karakter olmalı: her basış
+            // yenisini fırlatır, sahne hiçbir aralıkta karaktersiz kalmaz.
+            lines.Add(peekabooAfterPlay ? "PeekabooAfterPlay: OK" : "PeekabooAfterPlay: FAIL");
+            if (!peekabooAfterPlay)
+            {
+                success = false;
+            }
+
             // Ses aygıtı yoksa SKIP yazılır ve bu başarısızlık SAYILMAZ.
             lines.Add(animalAudioPlayed ? "AnimalAudio: OK" : "AnimalAudio: SKIP");
 
@@ -780,10 +871,12 @@ internal static class Program
             lines.Add($"Effects(Drums): {drumGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Balloons): {balloonGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Zoo): {zooGame.TotalEffectsSpawned} spawned");
+            lines.Add($"Effects(Peekaboo): {peekabooGame.TotalEffectsSpawned} spawned");
             if (pianoGame.TotalEffectsSpawned <= 0 ||
                 drumGame.TotalEffectsSpawned <= 0 ||
                 balloonGame.TotalEffectsSpawned <= 0 ||
                 zooGame.TotalEffectsSpawned <= 0 ||
+                peekabooGame.TotalEffectsSpawned <= 0 ||
                 noteIndex != demoNotes.Length)
             {
                 success = false;
@@ -872,6 +965,19 @@ internal static class Program
             }, "gamesapp-snapshot-zoo.png");
         }
 
+        using (var mixer = new WaveMixer())
+        using (var peekaboo = new PeekabooGameControl(mixer))
+        {
+            SaveSnapshot(peekaboo, () =>
+            {
+                // Karşılama karakteri fırlatılır ve tam görünür olana kadar
+                // ilerletilir: açık perde, karakter ve "CEE-E!" balonu birlikte görünür.
+                peekaboo.Start();
+                peekaboo.HandleKeyDown(0x41);
+                peekaboo.SelfTestAdvance(0.55f);
+            }, "gamesapp-snapshot-peekaboo.png");
+        }
+
         SaveAnimalSheet();
         SaveMenuSheets();
 
@@ -920,23 +1026,24 @@ internal static class Program
     /// </summary>
     private static void SaveMenuSheets()
     {
-        // İlk dördü gerçek oyunlar; kalanı menünün büyümesini göstermek için örnek.
+        // İlk beşi gerçek oyunlar; kalanı menünün büyümesini göstermek için örnek.
         (string Icon, string Title, double Hue)[] catalog =
         {
             ("🎹", "Piyano", 205.0),
             ("🥁", "Davul", 15.0),
             ("🎈", "Balon", 330.0),
             ("🦁", "Hayvanlar", 38.0),
+            ("🙈", "Cee-e", 285.0),
             ("🚗", "Arabalar", 250.0),
             ("🔤", "Harfler", 120.0),
-            ("🎨", "Boyama", 285.0),
+            ("🎨", "Boyama", 260.0),
             ("⭐", "Şekiller", 55.0),
             ("🍎", "Meyveler", 0.0)
         };
 
         // Gerçek kabuktaki şerit genişliği: ekran eksi çıkış butonu ve kenar boşlukları.
-        RenderMenuSheet(catalog, 4, 1420, 96, "gamesapp-snapshot-menu-4.png");
-        RenderMenuSheet(catalog, catalog.Length, 1420, 96, "gamesapp-snapshot-menu-9.png");
+        RenderMenuSheet(catalog, 5, 1420, 96, "gamesapp-snapshot-menu-5.png");
+        RenderMenuSheet(catalog, catalog.Length, 1420, 96, "gamesapp-snapshot-menu-10.png");
     }
 
     private static void RenderMenuSheet(
@@ -1154,6 +1261,38 @@ internal static class Program
             }
 
             lines.Add("Stress(Zoo): 6000 keys, 300 frames drawn");
+        }
+
+        // "Cee-e!": kırpılmış karakter çizimi, PathGradient spot ışığı ve toplanan
+        // perdenin küçülen şekilleri GDI+ için hassas olduğu için ayrıca stres edilir.
+        using (var mixer = new WaveMixer())
+        using (var peekaboo = new PeekabooGameControl(mixer))
+        {
+            peekaboo.Size = new Size(1600, 900);
+            peekaboo.CreateControl();
+
+            var random = new Random(555);
+
+            for (int i = 0; i < 6000; i++)
+            {
+                peekaboo.HandleKeyDown(random.Next(0, 256));
+
+                if (random.Next(2) == 0)
+                {
+                    peekaboo.HandleKeyUp(random.Next(0, 256));
+                }
+
+                // Kare süresi değişken: karakter hem fırlar hem saklanır, perde
+                // hem açılır hem kapanır.
+                peekaboo.SelfTestAdvance(random.Next(2) == 0 ? 0.016f : 0.35f);
+
+                if (i % 20 == 0)
+                {
+                    peekaboo.DrawToBitmap(bitmap, new Rectangle(Point.Empty, peekaboo.Size));
+                }
+            }
+
+            lines.Add("Stress(Peekaboo): 6000 keys, 300 frames drawn");
         }
 
         bool paintFailed = File.Exists(paintLog);
