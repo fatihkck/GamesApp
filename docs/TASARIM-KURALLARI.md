@@ -112,6 +112,13 @@ Boyama oyununda tuval koyu başlar ama boş bırakılmaz: girişte karşılama l
 tuval temizlenir ve boyama baştan başlar. Selftest `PaintWelcome` ve `PaintReset` ile
 doğrular.
 
+Havai Fişek'te gök kendi başına canlıdır (yıldızlar parıldar, şehir silüetinin
+pencereleri yanıp söner); girişte karşılama roketi fırlar, gök 3,5 saniye fişeksiz
+kalırsa bir roket kendiliğinden fırlar. Ters yön de sınırlıdır: havada en fazla
+`FireworksStageView.MaxRockets` roket olur, fazlası anında patlatılır (hızlı basan
+çocuk daha çok patlama görür). Selftest `FireworksWelcome` ve `FireworksAfterPlay`
+ile doğrular.
+
 ## 9. Sürpriz ödüller (hayvan sürprizi) — oyun bazında opsiyonel
 
 Her 8-14 eylemden sonra sahneye rastgele bir hayvan çıkar (sesiyle birlikte). Tahmin
@@ -139,6 +146,11 @@ zil parıltısı, parti borusu, kaydırmalı düdük) bağımsız karıştırıl
 **ESNETİLDİ — Boyama:** Hayvan sürprizi **yoktur** — sahne çocuğun biriken eseridir;
 üstüne çıkan bir hayvan tabloyu kapatır ve "benim yaptığım resim" hissini bölerdi.
 Ödül, tablonun dolması ve tamamlanınca gelen konfetili fanfar kutlamasıdır.
+
+**Havai Fişek — desene gömülü:** Sürpriz ayrı bir katman değil, fişeğin kendisidir:
+her 6-10 fişekte bir, patlamanın ışığı içinden torbadan gelen bir hayvan belirir ve
+sesini verir; kalp ve yıldız desenleri de aynı "acaba bu sefer ne çıkacak?" merakını
+besler.
 
 ## 10. Çökme ve kilitlenme kesinlikle olmayacak
 

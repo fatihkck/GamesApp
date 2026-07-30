@@ -4,6 +4,7 @@ using GamesApp.Audio;
 using GamesApp.Games;
 using GamesApp.Games.Bubbles;
 using GamesApp.Games.Drums;
+using GamesApp.Games.Fireworks;
 using GamesApp.Games.Paint;
 using GamesApp.Games.Peekaboo;
 using GamesApp.Games.Piano;
@@ -119,7 +120,8 @@ internal static class Program
             new BalloonGameControl(mixer, music),
             new ZooGameControl(mixer),
             new PeekabooGameControl(mixer),
-            new PaintGameControl(mixer)
+            new PaintGameControl(mixer),
+            new FireworksGameControl(mixer)
         };
 
         using var form = new ShellForm(games, synth.IsAvailable, selfTestMode: false);
@@ -355,6 +357,45 @@ internal static class Program
                 }
             }
 
+            // --- Havai fişek sesleri: fırlama ve patlama varyantları GÜR mü? ---
+            int fireworkSounds = 0;
+            int fireworkTotal = FireworkSoundSynth.LaunchVariantCount + FireworkSoundSynth.BoomVariantCount;
+            for (int i = 0; i < fireworkTotal; i++)
+            {
+                bool isLaunch = i < FireworkSoundSynth.LaunchVariantCount;
+                short[] sample = isLaunch
+                    ? FireworkSoundSynth.RenderLaunch(i)
+                    : FireworkSoundSynth.RenderBoom(i - FireworkSoundSynth.LaunchVariantCount);
+
+                int peak = 0;
+                for (int j = 0; j < sample.Length; j++)
+                {
+                    int magnitude = Math.Abs((int)sample[j]);
+                    if (magnitude > peak)
+                    {
+                        peak = magnitude;
+                    }
+                }
+
+                // En az 8820 örnek (~200 ms) ve tepe değeri tam ölçeğin %60'ı üzerinde.
+                if (sample.Length >= 8820 && peak >= (int)(short.MaxValue * 0.6f))
+                {
+                    fireworkSounds++;
+                }
+                else
+                {
+                    lines.Add($"FireworkSynthFail: {(isLaunch ? "launch" : "boom")} " +
+                              $"{(isLaunch ? i : i - FireworkSoundSynth.LaunchVariantCount)} " +
+                              $"(len {sample.Length}, peak {peak})");
+                }
+            }
+
+            lines.Add($"FireworkSynth: {fireworkSounds}/{fireworkTotal} rendered");
+            if (fireworkSounds != fireworkTotal)
+            {
+                success = false;
+            }
+
             // --- Ortak mikser: aygıt açılıyor mu? (Aygıt yoksa SKIP; düşürmez.) ---
             var mixer = new WaveMixer();
             _mixer = mixer;
@@ -587,16 +628,17 @@ internal static class Program
             // uygulama çalışmaya devam eder, bu yüzden testi düşürmez.
             lines.Add($"MciPath: {TestMciPath()}");
 
-            // --- Kabuk + altı oyunun uçtan uca denemesi ---
+            // --- Kabuk + yedi oyunun uçtan uca denemesi ---
             var pianoGame = new PianoGameControl(synth, animalSound);
             var drumGame = new DrumGameControl(drums, animalSound);
             var balloonGame = new BalloonGameControl(mixer, music);
             var zooGame = new ZooGameControl(mixer);
             var peekabooGame = new PeekabooGameControl(mixer);
             var paintGame = new PaintGameControl(mixer);
+            var fireworksGame = new FireworksGameControl(mixer);
             var games = new IGameModule[]
             {
-                pianoGame, drumGame, balloonGame, zooGame, peekabooGame, paintGame
+                pianoGame, drumGame, balloonGame, zooGame, peekabooGame, paintGame, fireworksGame
             };
 
             // --- Menü sözleşmesi: her oyunun simgesi ve adı olmalı ---
@@ -672,6 +714,11 @@ internal static class Program
             bool paintWelcome = false;
             int paintResets = 0;
             float paintCoverage = 0f;
+            bool switchedToFireworks = false;
+            int audibleFireworkKeys = 0;
+            bool fireworksWelcome = false;
+            bool fireworksAfterPlay = false;
+            int fireworksRocketsAfterPlay = 0;
 
             // Bireysel olarak yutulan özel tuşlar: hiçbiri sessiz kalmamalı.
             // Esc, LWin, RWin, Alt, Tab, Ctrl, Shift, CapsLock
@@ -835,6 +882,32 @@ internal static class Program
                     paintResets = paintGame.ResetCount;
                     paintCoverage = paintGame.CoverageRatio;
 
+                    // --- Havai Fişek oyununa geç ve aynı yoldan doğrula ---
+                    form.SwitchToGame(6);
+                    switchedToFireworks = ReferenceEquals(form.ActiveGame, fireworksGame);
+
+                    // Oyuna girişte karşılama roketi fırladı mı? (Gök boş başlamaz.)
+                    fireworksWelcome = fireworksGame.HasActivity;
+
+                    for (int i = 0; i < specialKeys.Length; i++)
+                    {
+                        if (fireworksGame.SelfTestFeedKey(specialKeys[i]))
+                        {
+                            audibleFireworkKeys++;
+                        }
+                    }
+
+                    // Uzun oynayış: roket fırlat + kare ilerlet döngüsünde gök hem
+                    // canlı kalmalı hem de roket üst sınırı asla aşılmamalı.
+                    for (int i = 0; i < 60; i++)
+                    {
+                        fireworksGame.SelfTestFeedKey(0x41 + (i % 20));
+                        fireworksGame.SelfTestAdvance(0.20f);
+                    }
+
+                    fireworksAfterPlay = fireworksGame.HasActivity;
+                    fireworksRocketsAfterPlay = fireworksGame.ActiveRocketCount;
+
                     form.SelfTestClose();
                 }
             };
@@ -985,6 +1058,33 @@ internal static class Program
                 success = false;
             }
 
+            lines.Add(switchedToFireworks ? "GameSwitch(Fireworks): OK" : "GameSwitch(Fireworks): FAIL");
+            if (!switchedToFireworks)
+            {
+                success = false;
+            }
+
+            lines.Add(fireworksWelcome ? "FireworksWelcome: OK" : "FireworksWelcome: FAIL");
+            if (!fireworksWelcome)
+            {
+                success = false;
+            }
+
+            lines.Add($"SpecialKeys(Fireworks): {audibleFireworkKeys}/{specialKeys.Length} reacted");
+            if (audibleFireworkKeys != specialKeys.Length)
+            {
+                success = false;
+            }
+
+            // 60 fırlatmadan sonra gök canlı kalmalı ama roket trafiği sınırı
+            // aşmamalı (fazlası anında patlatılarak eritilir).
+            lines.Add($"FireworksAfterPlay: {(fireworksAfterPlay ? "OK" : "FAIL")}, " +
+                      $"{fireworksRocketsAfterPlay} rocket(s), limit {FireworksStageView.MaxRockets}");
+            if (!fireworksAfterPlay || fireworksRocketsAfterPlay > FireworksStageView.MaxRockets)
+            {
+                success = false;
+            }
+
             // Ses aygıtı yoksa SKIP yazılır ve bu başarısızlık SAYILMAZ.
             lines.Add(animalAudioPlayed ? "AnimalAudio: OK" : "AnimalAudio: SKIP");
 
@@ -994,12 +1094,14 @@ internal static class Program
             lines.Add($"Effects(Zoo): {zooGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Peekaboo): {peekabooGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Paint): {paintGame.TotalEffectsSpawned} spawned");
+            lines.Add($"Effects(Fireworks): {fireworksGame.TotalEffectsSpawned} spawned");
             if (pianoGame.TotalEffectsSpawned <= 0 ||
                 drumGame.TotalEffectsSpawned <= 0 ||
                 balloonGame.TotalEffectsSpawned <= 0 ||
                 zooGame.TotalEffectsSpawned <= 0 ||
                 peekabooGame.TotalEffectsSpawned <= 0 ||
                 paintGame.TotalEffectsSpawned <= 0 ||
+                fireworksGame.TotalEffectsSpawned <= 0 ||
                 noteIndex != demoNotes.Length)
             {
                 success = false;
@@ -1119,6 +1221,33 @@ internal static class Program
             }, "gamesapp-snapshot-paint.png");
         }
 
+        using (var mixer = new WaveMixer())
+        using (var fireworks = new FireworksGameControl(mixer))
+        {
+            SaveSnapshot(fireworks, () =>
+            {
+                // Kareler GERÇEK adımlarla (16 ms) ilerletilir: tek büyük adım
+                // kıvılcımları aynı karede doğurup öldürür ve gök boş görünürdü.
+                // Karşılama roketi patlatılır, ikinci roket yükselirken üçüncüsü yeni
+                // fırlar: patlama kıvılcımları, iz ve şehir birlikte görünür.
+                fireworks.Start();
+                for (int i = 0; i < 30; i++)
+                {
+                    fireworks.SelfTestAdvance(0.016f);
+                }
+
+                fireworks.HandleKeyDown(0x41);
+                fireworks.HandleKeyUp(0x41);
+                for (int i = 0; i < 55; i++)
+                {
+                    fireworks.SelfTestAdvance(0.016f);
+                }
+
+                fireworks.HandleKeyDown(0x5A);
+                fireworks.SelfTestAdvance(0.016f);
+            }, "gamesapp-snapshot-fireworks.png");
+        }
+
         SaveAnimalSheet();
         SaveMenuSheets();
 
@@ -1167,7 +1296,7 @@ internal static class Program
     /// </summary>
     private static void SaveMenuSheets()
     {
-        // İlk altısı gerçek oyunlar; kalanı menünün büyümesini göstermek için örnek.
+        // İlk yedisi gerçek oyunlar; kalanı menünün büyümesini göstermek için örnek.
         (string Icon, string Title, double Hue)[] catalog =
         {
             ("🎹", "Piyano", 205.0),
@@ -1176,14 +1305,14 @@ internal static class Program
             ("🦁", "Hayvanlar", 38.0),
             ("🙈", "Cee-e", 285.0),
             ("🎨", "Boyama", 160.0),
-            ("🚗", "Arabalar", 250.0),
-            ("🔤", "Harfler", 120.0),
-            ("⭐", "Şekiller", 55.0),
+            ("🎆", "Fişek", 250.0),
+            ("🚗", "Arabalar", 120.0),
+            ("🔤", "Harfler", 55.0),
             ("🍎", "Meyveler", 0.0)
         };
 
         // Gerçek kabuktaki şerit genişliği: ekran eksi çıkış butonu ve kenar boşlukları.
-        RenderMenuSheet(catalog, 6, 1420, 96, "gamesapp-snapshot-menu-6.png");
+        RenderMenuSheet(catalog, 7, 1420, 96, "gamesapp-snapshot-menu-7.png");
         RenderMenuSheet(catalog, catalog.Length, 1420, 96, "gamesapp-snapshot-menu-10.png");
     }
 
@@ -1465,6 +1594,38 @@ internal static class Program
             }
 
             lines.Add($"Stress(Paint): 6000 keys, 300 frames drawn, {paint.ResetCount} reset(s)");
+        }
+
+        // Havai Fişek: yüzlerce hareketli kıvılcım çizgisi, PathGradient'siz ama çok
+        // sayıda küçük şekil ve şekil patlamaları (kalp/yıldız) ayrıca stres edilir.
+        using (var mixer = new WaveMixer())
+        using (var fireworks = new FireworksGameControl(mixer))
+        {
+            fireworks.Size = new Size(1600, 900);
+            fireworks.CreateControl();
+
+            var random = new Random(888);
+
+            for (int i = 0; i < 6000; i++)
+            {
+                fireworks.HandleKeyDown(random.Next(0, 256));
+
+                if (random.Next(2) == 0)
+                {
+                    fireworks.HandleKeyUp(random.Next(0, 256));
+                }
+
+                // Kare süresi değişken: roketler hem yükselir hem patlar, kıvılcımlar
+                // hem doğar hem söner.
+                fireworks.SelfTestAdvance(random.Next(2) == 0 ? 0.016f : 0.30f);
+
+                if (i % 20 == 0)
+                {
+                    fireworks.DrawToBitmap(bitmap, new Rectangle(Point.Empty, fireworks.Size));
+                }
+            }
+
+            lines.Add("Stress(Fireworks): 6000 keys, 300 frames drawn");
         }
 
         bool paintFailed = File.Exists(paintLog);
