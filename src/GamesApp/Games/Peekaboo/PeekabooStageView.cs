@@ -35,8 +35,11 @@ internal sealed class PeekabooStageView : Control
     /// <summary>Perdenin açılma süresi (saniye). Kısa: tepki tuşla aynı anda hissedilmeli.</summary>
     private const float OpenSeconds = 0.24f;
 
-    /// <summary>Perdenin kapanma süresi (saniye). Açılıştan yavaş: kapanış sakin bir andır.</summary>
-    private const float CloseSeconds = 0.50f;
+    /// <summary>
+    /// Perdenin kapanma süresi (saniye). Açılış kadar hızlı: perde "şak" diye kapanır
+    /// ve merak hemen yeniden kurulur (kullanıcı isteği: kapanış hızlı olsun).
+    /// </summary>
+    private const float CloseSeconds = 0.22f;
 
     /// <summary>Yıldız sayısı (perde kapalıyken sahneyi canlı tutan parıltılar).</summary>
     private const int StarCount = 34;

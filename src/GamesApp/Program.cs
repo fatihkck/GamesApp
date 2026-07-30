@@ -4,6 +4,7 @@ using GamesApp.Audio;
 using GamesApp.Games;
 using GamesApp.Games.Bubbles;
 using GamesApp.Games.Drums;
+using GamesApp.Games.Paint;
 using GamesApp.Games.Peekaboo;
 using GamesApp.Games.Piano;
 using GamesApp.Games.Zoo;
@@ -117,7 +118,8 @@ internal static class Program
             new DrumGameControl(drums, animalSound),
             new BalloonGameControl(mixer, music),
             new ZooGameControl(mixer),
-            new PeekabooGameControl(mixer)
+            new PeekabooGameControl(mixer),
+            new PaintGameControl(mixer)
         };
 
         using var form = new ShellForm(games, synth.IsAvailable, selfTestMode: false);
@@ -293,6 +295,64 @@ internal static class Program
             if (cheersRendered != CheerSoundSynth.VariantCount)
             {
                 success = false;
+            }
+
+            // --- Boya "şlop" sesleri: her varyant üretiliyor ve GÜR mü? ---
+            int splatsRendered = 0;
+            for (int i = 0; i < SplatSoundSynth.VariantCount; i++)
+            {
+                short[] sample = SplatSoundSynth.Render(i);
+
+                int peak = 0;
+                for (int j = 0; j < sample.Length; j++)
+                {
+                    int magnitude = Math.Abs((int)sample[j]);
+                    if (magnitude > peak)
+                    {
+                        peak = magnitude;
+                    }
+                }
+
+                // En az 4410 örnek (~100 ms) ve tepe değeri tam ölçeğin %60'ı üzerinde.
+                if (sample.Length >= 4410 && peak >= (int)(short.MaxValue * 0.6f))
+                {
+                    splatsRendered++;
+                }
+                else
+                {
+                    lines.Add($"SplatSynthFail: varyant {i} (len {sample.Length}, peak {peak})");
+                }
+            }
+
+            lines.Add($"SplatSynth: {splatsRendered}/{SplatSoundSynth.VariantCount} rendered");
+            if (splatsRendered != SplatSoundSynth.VariantCount)
+            {
+                success = false;
+            }
+
+            // --- Tablo tamamlanma fanfarı: yeterince uzun ve GÜR mü? ---
+            {
+                short[] fanfare = SplatSoundSynth.GetFanfareSample();
+
+                int peak = 0;
+                for (int j = 0; j < fanfare.Length; j++)
+                {
+                    int magnitude = Math.Abs((int)fanfare[j]);
+                    if (magnitude > peak)
+                    {
+                        peak = magnitude;
+                    }
+                }
+
+                // En az 22050 örnek (~500 ms): fanfar bir kutlamadır, kısa bip olamaz.
+                bool fanfareOk = fanfare.Length >= 22050 && peak >= (int)(short.MaxValue * 0.6f);
+                lines.Add(fanfareOk
+                    ? "PaintFanfare: OK"
+                    : $"PaintFanfare: FAIL (len {fanfare.Length}, peak {peak})");
+                if (!fanfareOk)
+                {
+                    success = false;
+                }
             }
 
             // --- Ortak mikser: aygıt açılıyor mu? (Aygıt yoksa SKIP; düşürmez.) ---
@@ -527,13 +587,17 @@ internal static class Program
             // uygulama çalışmaya devam eder, bu yüzden testi düşürmez.
             lines.Add($"MciPath: {TestMciPath()}");
 
-            // --- Kabuk + beş oyunun uçtan uca denemesi ---
+            // --- Kabuk + altı oyunun uçtan uca denemesi ---
             var pianoGame = new PianoGameControl(synth, animalSound);
             var drumGame = new DrumGameControl(drums, animalSound);
             var balloonGame = new BalloonGameControl(mixer, music);
             var zooGame = new ZooGameControl(mixer);
             var peekabooGame = new PeekabooGameControl(mixer);
-            var games = new IGameModule[] { pianoGame, drumGame, balloonGame, zooGame, peekabooGame };
+            var paintGame = new PaintGameControl(mixer);
+            var games = new IGameModule[]
+            {
+                pianoGame, drumGame, balloonGame, zooGame, peekabooGame, paintGame
+            };
 
             // --- Menü sözleşmesi: her oyunun simgesi ve adı olmalı ---
             // Simge kritik: menü daraldığında ad gizlenir, geriye yalnızca simge kalır.
@@ -603,6 +667,11 @@ internal static class Program
             int audiblePeekabooKeys = 0;
             bool peekabooWelcome = false;
             bool peekabooAfterPlay = false;
+            bool switchedToPaint = false;
+            int audiblePaintKeys = 0;
+            bool paintWelcome = false;
+            int paintResets = 0;
+            float paintCoverage = 0f;
 
             // Bireysel olarak yutulan özel tuşlar: hiçbiri sessiz kalmamalı.
             // Esc, LWin, RWin, Alt, Tab, Ctrl, Shift, CapsLock
@@ -740,6 +809,32 @@ internal static class Program
 
                     peekabooAfterPlay = peekabooGame.HasCharacter;
 
+                    // --- Boyama oyununa geç ve aynı yoldan doğrula ---
+                    form.SwitchToGame(5);
+                    switchedToPaint = ReferenceEquals(form.ActiveGame, paintGame);
+
+                    // Oyuna girişte karşılama lekesi düştü mü? (Tuval boş başlamaz.)
+                    paintWelcome = paintGame.CoverageRatio > 0f;
+
+                    for (int i = 0; i < specialKeys.Length; i++)
+                    {
+                        if (paintGame.SelfTestFeedKey(specialKeys[i]))
+                        {
+                            audiblePaintKeys++;
+                        }
+                    }
+
+                    // Uzun oynayış: 220 leke tuvali doldurmalı ve EN AZ BİR kez
+                    // kutlamalı sıfırlama tetiklenmeli (tablo tamamlanma döngüsü).
+                    for (int i = 0; i < 220; i++)
+                    {
+                        paintGame.SelfTestFeedKey(i % 256);
+                        paintGame.SelfTestAdvance(0.05f);
+                    }
+
+                    paintResets = paintGame.ResetCount;
+                    paintCoverage = paintGame.CoverageRatio;
+
                     form.SelfTestClose();
                 }
             };
@@ -864,6 +959,32 @@ internal static class Program
                 success = false;
             }
 
+            lines.Add(switchedToPaint ? "GameSwitch(Paint): OK" : "GameSwitch(Paint): FAIL");
+            if (!switchedToPaint)
+            {
+                success = false;
+            }
+
+            lines.Add(paintWelcome ? "PaintWelcome: OK" : "PaintWelcome: FAIL");
+            if (!paintWelcome)
+            {
+                success = false;
+            }
+
+            lines.Add($"SpecialKeys(Paint): {audiblePaintKeys}/{specialKeys.Length} reacted");
+            if (audiblePaintKeys != specialKeys.Length)
+            {
+                success = false;
+            }
+
+            // 220 lekeden sonra tablo en az bir kez tamamlanıp sıfırlanmış olmalı:
+            // "komple resim olunca baştan başlar" döngüsü gerçekten dönüyor mu?
+            lines.Add($"PaintReset: {paintResets} reset(s), coverage {paintCoverage:P0}");
+            if (paintResets < 1)
+            {
+                success = false;
+            }
+
             // Ses aygıtı yoksa SKIP yazılır ve bu başarısızlık SAYILMAZ.
             lines.Add(animalAudioPlayed ? "AnimalAudio: OK" : "AnimalAudio: SKIP");
 
@@ -872,11 +993,13 @@ internal static class Program
             lines.Add($"Effects(Balloons): {balloonGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Zoo): {zooGame.TotalEffectsSpawned} spawned");
             lines.Add($"Effects(Peekaboo): {peekabooGame.TotalEffectsSpawned} spawned");
+            lines.Add($"Effects(Paint): {paintGame.TotalEffectsSpawned} spawned");
             if (pianoGame.TotalEffectsSpawned <= 0 ||
                 drumGame.TotalEffectsSpawned <= 0 ||
                 balloonGame.TotalEffectsSpawned <= 0 ||
                 zooGame.TotalEffectsSpawned <= 0 ||
                 peekabooGame.TotalEffectsSpawned <= 0 ||
+                paintGame.TotalEffectsSpawned <= 0 ||
                 noteIndex != demoNotes.Length)
             {
                 success = false;
@@ -978,6 +1101,24 @@ internal static class Program
             }, "gamesapp-snapshot-peekaboo.png");
         }
 
+        using (var mixer = new WaveMixer())
+        using (var paint = new PaintGameControl(mixer))
+        {
+            SaveSnapshot(paint, () =>
+            {
+                // Bir düzine leke vurulur: tuvalin farklı köşelerinde büyük renkli
+                // lekeler, fırça izleri ve damlacıklar birlikte görünür.
+                paint.Start();
+                for (int i = 0; i < 12; i++)
+                {
+                    int vk = 0x30 + i * 17;
+                    paint.HandleKeyDown(vk);
+                    paint.HandleKeyUp(vk);
+                    paint.SelfTestAdvance(0.1f);
+                }
+            }, "gamesapp-snapshot-paint.png");
+        }
+
         SaveAnimalSheet();
         SaveMenuSheets();
 
@@ -1026,7 +1167,7 @@ internal static class Program
     /// </summary>
     private static void SaveMenuSheets()
     {
-        // İlk beşi gerçek oyunlar; kalanı menünün büyümesini göstermek için örnek.
+        // İlk altısı gerçek oyunlar; kalanı menünün büyümesini göstermek için örnek.
         (string Icon, string Title, double Hue)[] catalog =
         {
             ("🎹", "Piyano", 205.0),
@@ -1034,15 +1175,15 @@ internal static class Program
             ("🎈", "Balon", 330.0),
             ("🦁", "Hayvanlar", 38.0),
             ("🙈", "Cee-e", 285.0),
+            ("🎨", "Boyama", 160.0),
             ("🚗", "Arabalar", 250.0),
             ("🔤", "Harfler", 120.0),
-            ("🎨", "Boyama", 260.0),
             ("⭐", "Şekiller", 55.0),
             ("🍎", "Meyveler", 0.0)
         };
 
         // Gerçek kabuktaki şerit genişliği: ekran eksi çıkış butonu ve kenar boşlukları.
-        RenderMenuSheet(catalog, 5, 1420, 96, "gamesapp-snapshot-menu-5.png");
+        RenderMenuSheet(catalog, 6, 1420, 96, "gamesapp-snapshot-menu-6.png");
         RenderMenuSheet(catalog, catalog.Length, 1420, 96, "gamesapp-snapshot-menu-10.png");
     }
 
@@ -1293,6 +1434,37 @@ internal static class Program
             }
 
             lines.Add("Stress(Peekaboo): 6000 keys, 300 frames drawn");
+        }
+
+        // Boyama: bitmap'e sürekli birikimli çizim, döndürülmüş fırça izleri ve
+        // tekrarlanan kutlamalı sıfırlama döngüsü ayrıca stres edilir.
+        using (var mixer = new WaveMixer())
+        using (var paint = new PaintGameControl(mixer))
+        {
+            paint.Size = new Size(1600, 900);
+            paint.CreateControl();
+
+            var random = new Random(333);
+
+            for (int i = 0; i < 6000; i++)
+            {
+                paint.HandleKeyDown(random.Next(0, 256));
+
+                if (random.Next(2) == 0)
+                {
+                    paint.HandleKeyUp(random.Next(0, 256));
+                }
+
+                // Kare süresi değişken: sıfırlama animasyonu hem başlar hem biter.
+                paint.SelfTestAdvance(random.Next(2) == 0 ? 0.016f : 0.35f);
+
+                if (i % 20 == 0)
+                {
+                    paint.DrawToBitmap(bitmap, new Rectangle(Point.Empty, paint.Size));
+                }
+            }
+
+            lines.Add($"Stress(Paint): 6000 keys, 300 frames drawn, {paint.ResetCount} reset(s)");
         }
 
         bool paintFailed = File.Exists(paintLog);

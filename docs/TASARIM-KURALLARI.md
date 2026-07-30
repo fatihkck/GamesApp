@@ -106,6 +106,12 @@ sırayla yanar, yıldızlar parıldar); oyuna girişte karşılama karakteri fı
 3,5 saniye kapalı kalırsa bir karakter kendiliğinden "Cee-e!" yapıp çocuğu basmaya
 davet eder. Selftest `PeekabooWelcome` ve `PeekabooAfterPlay` ile doğrular.
 
+Boyama oyununda tuval koyu başlar ama boş bırakılmaz: girişte karşılama lekesi düşer,
+4 saniye dokunulmazsa kendiliğinden bir leke gelir ve OYUN DEĞİŞSE BİLE RESİM KORUNUR
+(çocuk dönünce tablosunu yerinde bulur). Tablo %80 dolunca konfetili fanfar kutlamasıyla
+tuval temizlenir ve boyama baştan başlar. Selftest `PaintWelcome` ve `PaintReset` ile
+doğrular.
+
 ## 9. Sürpriz ödüller (hayvan sürprizi) — oyun bazında opsiyonel
 
 Her 8-14 eylemden sonra sahneye rastgele bir hayvan çıkar (sesiyle birlikte). Tahmin
@@ -129,6 +135,10 @@ perdeden fırlayan karakterin kendisi zaten sürprizdir. Çeşitlilik iki ayrı 
 sağlanır: karakter torbası (12 hayvan) ve komik ses torbası (kıkırdama, kahkaha, alkış,
 zil parıltısı, parti borusu, kaydırmalı düdük) bağımsız karıştırılır; aynı ikili tekrar
 üst üste gelmez.
+
+**ESNETİLDİ — Boyama:** Hayvan sürprizi **yoktur** — sahne çocuğun biriken eseridir;
+üstüne çıkan bir hayvan tabloyu kapatır ve "benim yaptığım resim" hissini bölerdi.
+Ödül, tablonun dolması ve tamamlanınca gelen konfetili fanfar kutlamasıdır.
 
 ## 10. Çökme ve kilitlenme kesinlikle olmayacak
 
