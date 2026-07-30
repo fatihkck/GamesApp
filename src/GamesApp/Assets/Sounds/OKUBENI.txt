@@ -1,0 +1,98 @@
+PIYANO KIOSK - HAYVAN SESLERI KLASORU
+=====================================
+
+Bu klasore kendi hayvan ses dosyalarini koyabilirsin.
+
+1) DOSYAYI OLDUGU GIBI KOPYALA
+------------------------------
+Pixabay'den (veya baska bir kaynaktan) indirdigin hayvan seslerini bu klasore
+OLDUGU GIBI kopyala. Dosyanin adini DEGISTIRMEN GEREKMEZ.
+
+Ornek: "cat-meow-8-fx-306184.mp3" dosyasini oldugu gibi buraya at, program bunun
+kedi sesi oldugunu kendisi anlar.
+
+2) DOSYA ADINDA HAYVANIN ADI GECMESI YETERLI
+--------------------------------------------
+Turkce veya Ingilizce, buyuk/kucuk harf farketmez. Turkce karakterler de calisir.
+Taninan anahtar kelimeler:
+
+  Kedi      : cat, kedi, meow, miyav, kitten, yavru kedi
+  Kopek     : dog, kopek, bark, hav, puppy, woof
+  Inek      : cow, inek, moo, cattle, boga
+  Koyun     : sheep, koyun, lamb, kuzu, baa, bleat
+  Civciv    : chick, civciv, bird, kus, chirp, tweet, sparrow
+  Ordek     : duck, ordek, quack, vak
+  Horoz     : rooster, horoz, cock, crow, tavuk, hen, chicken
+  Kurbaga   : frog, kurbaga, croak, toad, virak
+
+Not: Dosya adinda daha ERKEN gecen anahtar kelime kazanir. Ayni yerde birden fazla
+anahtar varsa daha UZUN olan kazanir (ornek: "cattle" -> inek, "chicken" -> horoz).
+
+3) DESTEKLENEN FORMATLAR
+------------------------
+  wav, mp3, ogg, m4a, wma, aac
+
+WAV dosyalari dogrudan calinir. MP3 ve diger sikistirilmis formatlar Windows'un
+MCI ses altyapisi uzerinden calinir; ek program kurmak gerekmez.
+
+4) AYNI HAYVAN ICIN BIRDEN FAZLA DOSYA
+--------------------------------------
+Ayni hayvan icin birkac dosya koyarsan (ornek: cat1.mp3, cat-meow-2.mp3,
+kedi-sesi.wav) her seferinde RASTGELE biri calar. Boylece ses tekrar etmez.
+
+5) SURE SINIRI VE ACILIS DOGRULAMASI (ONEMLI)
+---------------------------------------------
+Uygulama her acilista klasordeki her dosyayi BIR KEZ acip dogrular ve suresini olcer.
+Sunlar ELENIR (o dosya kullanilmaz):
+
+  - Acilamayanlar: bazi MP3 kodlayicilarinin cikitisi Windows MCI ile uyumsuzdur.
+    Boyle bir dosya calma aninda sessizlige yol acardi, bu yuzden basta elenir.
+  - 6 SANIYEDEN UZUN olanlar: bu uygulama icin fazla uzundur.
+
+Hayvan ekranda kaldigi surece ses calar; ses suresine gore hayvanin sahne suresi
+ayarlanir (en az 1,8 saniye, en fazla 4 saniye). Hayvan kaybolurken ses de kesilir.
+
+ONERI: 1-3 saniyelik, bastan sona hayvan sesi olan kayitlar sec. 4 saniyeden uzun
+kayitlar hayvan kaybolurken ortasindan kesilir.
+
+Bir hayvanin TUM dosyalari elenirse yalnizca o hayvan sentezlenen sese doner;
+diger hayvanlar etkilenmez.
+
+6) DOSYA KOYMAZSAN NE OLUR?
+---------------------------
+Hicbir sey bozulmaz. Bir hayvan icin dosya koymazsan, uygulamanin kendi urettigi
+(prosedurel olarak sentezlenen) karikatur ses kullanilir. Klasor tamamen bos olsa
+bile uygulama eksiksiz calisir.
+
+Adindan hangi hayvan oldugu anlasilamayan dosyalar sessizce yok sayilir; uygulama
+bundan etkilenmez.
+
+7) HANGI SES NEREDEN GELIYOR? NEDEN ELENDI?
+-------------------------------------------
+Uygulama her acilista bir teshis dosyasi yazar:
+
+  %TEMP%\piyano-sesler.log
+
+Icinde her hayvan icin "DOSYA: <ad> (<sure> sn)" veya "SENTEZ" yazar; ayrica ELENEN
+dosyalari gerekcesiyle listeler:
+
+  elendi -> dog-xyz.mp3 -> ACILAMADI (MCI hata 277)
+  elendi -> duck-abc.wav -> COK UZUN (8,0 sn, ust sinir 6,0 sn)
+  atlandi -> muzik-123.mp3 -> ad eslesmedi
+
+PowerShell ile bakmak icin:
+
+  Get-Content "$env:TEMP\piyano-sesler.log"
+
+Not: Klasor yalnizca uygulama ACILISINDA bir kez taranir. Yeni dosya ekledikten
+sonra uygulamayi kapatip yeniden ac.
+
+8) LISANS HATIRLATMASI
+----------------------
+Pixabay icerigi kendi projende ucretsiz kullanilabilir ve atif (kaynak gosterme)
+gerektirmez. ANCAK ses dosyalarini oldugu gibi yeniden dagitmak (ornegin baskasina
+"ses paketi" olarak vermek) lisans disidir. Indirdigin her dosyanin kendi
+sayfasindaki lisans notunu kontrol et.
+
+Bu klasorde bu uygulamayla dagitilan hazir ses dosyasi YOKTUR; buradaki tum sesler
+sen ekleyene kadar uygulama tarafindan uretilir.

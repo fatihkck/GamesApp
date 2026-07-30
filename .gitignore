@@ -1,0 +1,11 @@
+bin/
+obj/
+*.user
+.vs/
+
+# Arka plan müziği: telifli ticari müzik dosyaları depoya EKLENMEZ.
+# Depo herkese açık; kendi parçanızı yerel olarak Assets/Music klasörüne
+# kopyalayın (uygulama klasördeki ilk ses dosyasını kısık ve aralıklı çalar).
+# Açıklama dosyası (OKUBENI.txt) depoda tutulur.
+src/GamesApp/Assets/Music/*
+!src/GamesApp/Assets/Music/OKUBENI.txt

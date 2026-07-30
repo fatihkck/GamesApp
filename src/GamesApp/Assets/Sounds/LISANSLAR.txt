@@ -1,0 +1,241 @@
+================================================================================
+PIYANO KIOSK - HAYVAN SESLERI: KAYNAK VE LISANS BILGILERI
+================================================================================
+
+Bu klasordeki hayvan sesi dosyalarinin TAMAMI Wikimedia Commons
+(https://commons.wikimedia.org) uzerinden, acik lisansli (CC0, kamu mali,
+CC BY veya CC BY-SA) kayitlardan indirilmistir. Hicbir dosya "tum haklari
+sakli" veya ticari olmayan (NC) / turetilemez (ND) kisitli degildir.
+
+Uygulama yalnizca WAV ve MP3 calabildigi icin, kaynagi Ogg Vorbis olan
+kayitlarda Wikimedia'nin kendi sunucularinda uretilen resmi MP3 surumu
+(".../commons/transcoded/.../dosya.ogg.mp3") indirilmistir. Bu yalnizca bir
+format donusumudur; eser, yazar ve lisans ayni kalir.
+
+ATIF ZORUNLULUGU
+----------------
+Asagidaki listede lisansi CC BY veya CC BY-SA olan dosyalar icin lisans,
+eserin yazarina atif yapilmasini sart kosar. ISTE BU DOSYA O ATIF
+YUKUMLULUGUNU KARSILAMAK ICIN HAZIRLANMISTIR: her ses dosyasinin ozgun
+basligi, kaynak sayfasi, yazari, lisans adi ve lisans adresi asagida
+eksiksiz olarak verilmistir.
+
+CC0 ve kamu mali (public domain) dosyalar icin atif hukuken zorunlu
+degildir; yine de kaynak gosterme nezaketi olarak listeye dahil edilmistir.
+
+UYGULAMA UCUNCU KISILERE DAGITILIRSA
+------------------------------------
+Bu LISANSLAR.txt dosyasi, ses dosyalariyla BIRLIKTE dagitilmak
+ZORUNDADIR. Uygulama bir baskasina verilir, kopyalanir, kurulum paketine
+konur veya yayinlanirsa bu dosya da paketin icinde gitmelidir; aksi halde
+CC BY / CC BY-SA lisanslarinin atif kosulu ihlal edilmis olur.
+
+CC BY-SA ("ayni lisansla paylas") NOTU
+--------------------------------------
+CC BY-SA lisansli ses dosyalari degistirilerek (kesilerek, karistirilarak,
+efekt eklenerek) dagitilirsa, ortaya cikan TUREV ses de ayni CC BY-SA
+lisansiyla paylasilmak zorundadir. Dosyalar oldugu gibi, degistirilmeden
+kullanildigi surece bu kosul yalnizca ses dosyalarinin kendisini baglar;
+uygulamanin geri kalan kaynak kodunu etkilemez.
+
+Lisans metinlerinin tam hali:
+  CC0 1.0        : https://creativecommons.org/publicdomain/zero/1.0/
+  CC BY 2.5      : https://creativecommons.org/licenses/by/2.5/
+  CC BY 4.0      : https://creativecommons.org/licenses/by/4.0/
+  CC BY-SA 3.0   : https://creativecommons.org/licenses/by-sa/3.0/
+  CC BY-SA 4.0   : https://creativecommons.org/licenses/by-sa/4.0/
+
+
+================================================================================
+DOSYA LISTESI
+================================================================================
+
+--------------------------------------------------------------------------------
+KEDI (miyav)
+--------------------------------------------------------------------------------
+Yerel dosya adi : cat-1.wav
+Ozgun baslik    : File:Meow of a Siamese cat - freemaster2.wav
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Meow_of_a_Siamese_cat_-_freemaster2.wav
+Lisans          : CC0 1.0 (kamu malina birakilmis)
+Lisans adresi   : https://creativecommons.org/publicdomain/zero/1.0/
+Yazar           : freemaster2
+
+Yerel dosya adi : cat-2.mp3
+Ozgun baslik    : File:Maullido de gata hembra joven.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Maullido_de_gata_hembra_joven.ogg
+Lisans          : CC0 1.0 (kamu malina birakilmis)
+Lisans adresi   : https://creativecommons.org/publicdomain/zero/1.0/
+Yazar           : George Miquilena
+Not             : Wikimedia'nin resmi MP3 surumu indirildi (kaynak Ogg Vorbis).
+
+--------------------------------------------------------------------------------
+KOPEK (havlama)
+--------------------------------------------------------------------------------
+Yerel dosya adi : dog-1.mp3
+Ozgun baslik    : File:Personality-of-Wild-Male-Crested-Macaques-(Macaca-nigra)-pone.0069383.s001.oga
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Personality-of-Wild-Male-Crested-Macaques-(Macaca-nigra)-pone.0069383.s001.oga
+Lisans          : CC BY 2.5  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by/2.5/
+Yazar           : Neumann C, Agil M, Widdig A, Engelhardt A
+Kaynak yayin    : PLoS ONE makalesinin ek ses dosyasi; kayit, deneyde uyaran
+                  olarak kullanilan tek bir kopek havlamasidir.
+Not             : Wikimedia'nin resmi MP3 surumu indirildi (kaynak Ogg).
+
+Yerel dosya adi : dog-2.mp3
+Ozgun baslik    : File:Perro labrador ladrando 01.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Perro_labrador_ladrando_01.ogg
+Lisans          : CC BY-SA 4.0  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by-sa/4.0/
+Yazar           : Luis Alvaz
+Not             : Wikimedia'nin resmi MP3 surumu indirildi (kaynak Ogg Vorbis).
+
+--------------------------------------------------------------------------------
+INEK (moo)
+--------------------------------------------------------------------------------
+Yerel dosya adi : cow-1.mp3
+Ozgun baslik    : File:Mudchute cow 1.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Mudchute_cow_1.ogg
+Lisans          : CC BY-SA 3.0  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by-sa/3.0/
+Yazar           : Secretlondon
+Not             : Mudchute City Farm (Londra) kaydi. Wikimedia'nin resmi MP3
+                  surumu indirildi (kaynak Ogg Vorbis).
+
+--------------------------------------------------------------------------------
+KOYUN / KUZU (meleme)
+--------------------------------------------------------------------------------
+Yerel dosya adi : sheep-1.mp3
+Ozgun baslik    : File:Sheep bleat.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Sheep_bleat.ogg
+Lisans          : CC0 1.0 (kamu malina birakilmis)
+Lisans adresi   : https://creativecommons.org/publicdomain/zero/1.0/
+Yazar           : Eviatar Bach
+Not             : Maan Farms, Abbotsford, British Columbia, Kanada kaydi.
+                  Wikimedia'nin resmi MP3 surumu indirildi (kaynak Ogg Vorbis).
+
+Yerel dosya adi : sheep-2.mp3
+Ozgun baslik    : File:Mudchute sheep 1.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Mudchute_sheep_1.ogg
+Lisans          : CC BY-SA 3.0  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by-sa/3.0/
+Yazar           : Secretlondon
+Not             : Mudchute City Farm (Londra) kaydi. Wikimedia'nin resmi MP3
+                  surumu indirildi (kaynak Ogg Vorbis).
+
+--------------------------------------------------------------------------------
+KUS (civilti)
+--------------------------------------------------------------------------------
+Yerel dosya adi : bird-1.mp3
+Ozgun baslik    : File:Bird chirp 2 (Gravity Sound).mp3
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Bird_chirp_2_(Gravity_Sound).mp3
+Lisans          : CC BY 4.0  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by/4.0/
+Yazar           : Gravity Sound
+
+Yerel dosya adi : bird-2.mp3
+Ozgun baslik    : File:Parus major talgokse.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Parus_major_talgokse.ogg
+Lisans          : Kamu mali (Public domain) - yukleyen kendi eserini kamu
+                  malina birakmistir (Commons sablonu: PD-self)
+Lisans adresi   : https://commons.wikimedia.org/wiki/Template:PD-self
+Yazar           : Handyvle~commonswiki (Commons kullanicisi, 2006 yuklemesi)
+Not             : Buyuk bastankara (Parus major) kaydi. Wikimedia'nin resmi
+                  MP3 surumu indirildi (kaynak Ogg Vorbis).
+
+--------------------------------------------------------------------------------
+ORDEK (vaklama)
+--------------------------------------------------------------------------------
+Yerel dosya adi : duck-1.mp3
+Ozgun baslik    : File:Anas poecilorhyncha - Indian Spot-billed Duck XC114233.mp3
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Anas_poecilorhyncha_-_Indian_Spot-billed_Duck_XC114233.mp3
+Lisans          : CC BY-SA 3.0  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by-sa/3.0/
+Yazar           : Sharad Apte
+Not             : Hint benekli gagali ordek (Anas poecilorhyncha); kaynak
+                  xeno-canto arsivi (XC114233). Ozgun dosyada ID3 etiketi ile
+                  ses verisi arasinda 3840 baytlik bozuk dolgu vardi ve dosya
+                  Windows MCI ile ACILAMIYORDU. Dosyanin basindaki bu bozuk
+                  etiket bolumu cikarilmistir; SES VERISI BIT BAZINDA
+                  DEGISTIRILMEMISTIR (yeniden kodlama yapilmadi, yalnizca
+                  kapsayici onarildi).
+
+Yerel dosya adi : duck-2.mp3
+Ozgun baslik    : File:Anas acuta.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Anas_acuta.ogg
+Lisans          : Kamu mali (Public domain) - ABD Milli Parklar Idaresi
+                  (National Park Service) eseri
+Lisans adresi   : https://en.wikipedia.org/wiki/Copyright_status_of_works_by_the_federal_government_of_the_United_States
+Yazar           : ABD Milli Parklar Idaresi (NPS); kaydi yapan kisi bilinmiyor
+Kaynak          : http://www.nps.gov/archive/wica/Bird_List.htm
+Not             : Kilickuyruk ordek (Anas acuta) sesi. Wikimedia'nin resmi
+                  MP3 surumu indirildi (kaynak Ogg Vorbis).
+
+--------------------------------------------------------------------------------
+HOROZ (otus)
+--------------------------------------------------------------------------------
+Yerel dosya adi : rooster-1.wav
+Ozgun baslik    : File:Coq qui chante (DenisChardonnet).wav
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Coq_qui_chante_(DenisChardonnet).wav
+Lisans          : CC0 1.0 (kamu malina birakilmis)
+Lisans adresi   : https://creativecommons.org/publicdomain/zero/1.0/
+Yazar           : DenisChardonnet
+
+Yerel dosya adi : rooster-2.wav
+Ozgun baslik    : File:Chiecken.wav
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Chiecken.wav
+Lisans          : CC BY-SA 4.0  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by-sa/4.0/
+Yazar           : RockLt.Col.
+Not             : Commons'ta "Roosters crowing" (oten horozlar) kategorisinde
+                  yer alir. Ozgun WAV dosyasi oldugu gibi indirildi
+                  (48 kHz, stereo, 16 bit PCM).
+
+--------------------------------------------------------------------------------
+KURBAGA (viraklama)
+--------------------------------------------------------------------------------
+Yerel dosya adi : frog-1.mp3
+Ozgun baslik    : File:PigFrog EvergladesNP.ogg
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:PigFrog_EvergladesNP.ogg
+Lisans          : Kamu mali (Public domain) - ABD federal kurum eseri
+Lisans adresi   : https://en.wikipedia.org/wiki/Copyright_status_of_works_by_the_federal_government_of_the_United_States
+Yazar           : NPS Natural Sounds & Night Skies Division
+                  (ABD Milli Parklar Idaresi)
+Not             : Domuz kurbagasi (Lithobates grylio), Everglades Milli Parki.
+                  Wikimedia'nin resmi MP3 surumu indirildi (kaynak Ogg Vorbis).
+
+Yerel dosya adi : frog-2.wav
+Ozgun baslik    : File:Microhyla sholigari call (10.1371-journal.pone.0149727).wav
+Kaynak sayfa    : https://commons.wikimedia.org/wiki/File:Microhyla_sholigari_call_(10.1371-journal.pone.0149727).wav
+Lisans          : CC BY 4.0  (ATIF ZORUNLU)
+Lisans adresi   : https://creativecommons.org/licenses/by/4.0/
+Yazar           : Seshadri KS, Singal R, Priti H, Ravikanth G, Vidisha MK,
+                  Saurabh S, et al. (2016)
+Kaynak yayin    : Microhyla laterite sp. nov., A New Species of Microhyla
+                  Tschudi, 1838 (Amphibia: Anura: Microhylidae) from a Laterite
+                  Rock Formation in South West India.
+                  PLoS ONE 11(3): e0149727.
+                  https://doi.org/10.1371/journal.pone.0149727
+
+
+================================================================================
+OZET TABLO (sureler Windows MCI ile olculdu)
+================================================================================
+  cat-1.wav       1,52 s   CC0
+  cat-2.mp3       2,77 s   CC0
+  dog-1.mp3       3,64 s   CC BY 2.5
+  dog-2.mp3       4,89 s   CC BY-SA 4.0
+  cow-1.mp3       4,52 s   CC BY-SA 3.0
+  sheep-1.mp3     1,06 s   CC0
+  sheep-2.mp3     2,95 s   CC BY-SA 3.0
+  bird-1.mp3      1,82 s   CC BY 4.0
+  bird-2.mp3      3,77 s   Kamu mali (PD-self)
+  duck-1.mp3      3,04 s   CC BY-SA 3.0
+  duck-2.mp3      1,68 s   Kamu mali (ABD NPS)
+  rooster-1.wav   2,28 s   CC0
+  rooster-2.wav   2,27 s   CC BY-SA 4.0
+  frog-1.mp3      4,07 s   Kamu mali (ABD NPS)
+  frog-2.wav      2,23 s   CC BY 4.0
+
+================================================================================
+SON GUNCELLEME: 2026-07-29
+================================================================================

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Piyano Kiosk - Çocuklar için tam ekran piyano oyunu.
+    Harici NuGet paketi YOKTUR: yalnızca BCL + Win32 P/Invoke kullanılır.
+    Not: Makinede .NET 8 SDK bulunmasa bile net8.0-windows hedefi,
+    referans paketleri (ref pack) NuGet'ten restore edilerek derlenir.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>GamesApp</AssemblyName>
+    <RootNamespace>GamesApp</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!--
+      WFAC010: WinForms analizörü, yüksek DPI ayarının manifest yerine
+      Application.SetHighDpiMode / ApplicationHighDpiMode ile yapılmasını önerir.
+      Bilinçli olarak MANIFEST tercih edildi: DPI farkındalığı süreç başlangıcında,
+      ilk pencere oluşmadan devreye girer; kiosk penceresi doğrudan ekran
+      çözünürlüğünü kaplar ve yeniden ölçekleme/bulanıklık yaşanmaz.
+    -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+    <SatelliteResourceLanguages>tr;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <!--
+    Assets\Sounds içeriği çıktı klasörüne kopyalanır. Kullanıcı buraya kendi hayvan
+    ses dosyalarını (wav/mp3/ogg/m4a/wma/aac) koyabilir. "Update" kullanılır çünkü
+    SDK bu dosyaları zaten None olarak dâhil eder; "Include" çift kayıt uyarısı üretirdi.
+    Klasör boş olsa da derleme kırılmaz.
+  -->
+  <ItemGroup>
+    <None Update="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

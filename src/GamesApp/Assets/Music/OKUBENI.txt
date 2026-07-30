@@ -1,0 +1,41 @@
+================================================================================
+ARKA PLAN MUZIGI KLASORU
+================================================================================
+
+Balon oyununda arka planda calan muzik BU KLASORDEN okunur. Uygulama, klasordeki
+ilk ses dosyasini (ada gore sirali) bulur ve calar. Desteklenen bicimler:
+
+    .mp3  .wav  .m4a  .wma  .ogg  .aac
+
+Dosya yoksa uygulama SESSIZ calisir; hata vermez, oyun normal oynanir.
+
+--------------------------------------------------------------------------------
+NASIL MUZIK EKLERIM?
+--------------------------------------------------------------------------------
+Istediginiz sarkiyi bu klasore kopyalayin, uygulamayi yeniden baslatin. Baska
+bir sarkiya gecmek icin eski dosyayi silin veya adini alfabetik olarak sonraya
+gelecek sekilde degistirin.
+
+--------------------------------------------------------------------------------
+NEDEN KLASOR BOS? (ONEMLI)
+--------------------------------------------------------------------------------
+Bu depo herkese aciktir. Ticari/telifli muzik dosyalarini herkese acik bir
+depoya yuklemek telif hakki ihlalidir; bu yuzden ses dosyalari .gitignore ile
+depo disinda tutulur ve YALNIZCA kendi bilgisayarinizda durur.
+
+Ayni kural hayvan sesleri icin GECERLI DEGILDIR: Assets/Sounds klasorundeki
+kayitlarin tamami Wikimedia Commons uzerinden acik lisansli (CC0 / kamu mali /
+CC BY / CC BY-SA) kaynaklardan alinmistir ve atiflari LISANSLAR.txt dosyasinda
+eksiksiz verilmistir; onlar depoya dahildir.
+
+--------------------------------------------------------------------------------
+MUZIK NASIL CALAR? (tasarim karari)
+--------------------------------------------------------------------------------
+1,5 yas tasarim kurallari geregi (bkz. docs/TASARIM-KURALLARI.md, kural 4):
+
+  * Muzik KISIK calar (MCI olceginde 140/1000).
+  * Muzik ARALIKLIDIR: 60 saniye calar, 60 saniye susar, kaldigi yerden devam
+    eder. Sessizlik araliginda cocugun kendi eylemine ait sesler (patlama,
+    hayvan) one cikar.
+  * Sesi kisma komutu desteklenmiyorsa muzik HIC CALINMAZ; tam sesli muzik,
+    kisik muzikten kotudur.
